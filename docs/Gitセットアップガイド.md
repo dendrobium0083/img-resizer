@@ -85,23 +85,64 @@ git commit -m "初回コミット: プロジェクトの初期設定"
 
 ### 5-2. リモートリポジトリを接続
 
+このプロジェクトのリモートリポジトリURLは以下の通りです：
+
 ```bash
-git remote add origin https://github.com/ユーザー名/img-resizer.git
+git remote add origin https://github.com/dendrobium0083/img-resizer.git
 ```
 
 `origin`はリモートリポジトリの名前（通常は`origin`を使用）です。
 
-### 5-3. リモートリポジトリにプッシュ（アップロード）
+接続を確認するには：
+
+```bash
+git remote -v
+```
+
+### 5-3. GitHub認証の設定（重要！）
+
+GitHubは2021年8月からパスワード認証を廃止しています。**Personal Access Token (PAT)** が必要です。
+
+#### Personal Access Tokenを作成する手順
+
+1. [GitHub](https://github.com)にログイン
+2. 右上のプロフィール画像をクリック → **Settings**
+3. 左メニューの一番下 → **Developer settings**
+4. **Personal access tokens** → **Tokens (classic)**
+5. **Generate new token** → **Generate new token (classic)**
+6. **Note**: 用途を記入（例：`img-resizer project`）
+7. **Expiration**: 有効期限を選択
+8. **Select scopes**: `repo` にチェック（リポジトリへのアクセス権限）
+9. **Generate token** をクリック
+10. **表示されたトークンをコピー**（重要：この画面を閉じると二度と表示されません）
+
+### 5-4. リモートリポジトリにプッシュ（アップロード）
 
 ```bash
 git branch -M main
 git push -u origin main
 ```
 
+**注意**: 現在のブランチが`master`の場合は、`main`に変更する必要があります。
+
+プッシュ時に認証を求められたら：
+- **ユーザー名**: GitHubのユーザー名を入力
+- **パスワード**: 先ほどコピーした**Personal Access Token**を貼り付け
+
 - `git branch -M main`：ブランチ名を`main`に変更（GitHubの標準）
 - `git push -u origin main`：ローカルのコミットをリモートにアップロード
 
 初回のみ`-u`オプションが必要です。2回目以降は`git push`だけでOKです。
+
+#### 認証情報を保存する（オプション）
+
+毎回トークンを入力するのが面倒な場合は：
+
+```bash
+git config --global credential.helper manager-core
+```
+
+これにより、次回から自動的に認証情報が使用されます。
 
 ## ステップ6: 基本的なGit操作
 
