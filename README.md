@@ -10,8 +10,13 @@
 
 - **フレームワーク**: .NET 8
 - **言語**: C#
-- **アーキテクチャ**: クリーンアーキテクチャ
+- **アーキテクチャ**: クリーンアーキテクチャ + CQRS
 - **API**: ASP.NET Core WebAPI
+- **画像処理**: SixLabors.ImageSharp（System.Drawing.Commonから移行予定）
+- **ロギング**: Serilog（構造化ログ）
+- **バリデーション**: FluentValidation
+- **メディエーター**: MediatR
+- **静的解析**: Roslyn Analyzers、StyleCop、SonarAnalyzer
 
 ## 機能
 
@@ -22,6 +27,10 @@
 - 複数の画像形式に対応（JPEG、PNG、GIF、BMP）
 - 設定ファイル（`appsettings.json`）からファイルパスを取得
 - RESTful APIエンドポイント
+- Swagger/OpenAPIドキュメント
+- 構造化ログ（Serilog）によるトラブルシューティング
+- FluentValidationによる堅牢なバリデーション
+- Resultパターンによる明示的なエラーハンドリング
 
 ## プロジェクト構造
 
@@ -40,6 +49,7 @@ img-resizer/
     ├── 基本設計書.md                  # スペック開発：基本設計
     ├── 詳細設計書.md                  # スペック開発：詳細設計
     ├── エラーハンドリング仕様書.md     # スペック開発：エラーハンドリング
+    ├── リファクタリング改善案.md       # モダンな設計への移行計画
     ├── ドキュメント一覧.md             # ドキュメント管理
     └── （その他の開発ガイド）
 ```
@@ -182,10 +192,28 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 
 - **Domain層**: ビジネスエンティティとインターフェース（他のレイヤーに依存しない）
 - **Application層**: ユースケースの実装（Domain層のみに依存）
+  - CQRSパターン（Command/Query分離）
+  - MediatRによるメディエーターパターン
+  - FluentValidationによるバリデーション
+  - Resultパターンによるエラーハンドリング
 - **Infrastructure層**: 外部ライブラリの使用と実装（Domain層に依存）
+  - ImageSharpによる画像処理
+  - ファイルシステムアクセス
+  - Serilogによるロギング
 - **Presentation層**: WebAPIコントローラー（Application層とInfrastructure層に依存）
+  - RESTful API
+  - グローバル例外ハンドラー
+  - Swagger/OpenAPI
 
-詳細は `docs/基本設計書.md` および `docs/詳細設計書.md` を参照してください。
+### モダンな設計パターン
+
+- **Resultパターン**: 例外駆動からResult駆動へ移行
+- **CQRSパターン**: Command/Queryの明確な分離
+- **MediatRパイプライン**: バリデーション、ログ、トランザクション管理
+- **ドメインイベント**: ビジネスイベントの明示的な表現
+- **構造化ログ**: Serilogによる高度なログ分析
+
+詳細は `docs/基本設計書.md`、`docs/詳細設計書.md`、および `docs/リファクタリング改善案.md` を参照してください。
 
 ## ドキュメント
 
@@ -200,6 +228,7 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 - [基本設計書](docs/基本設計書.md) - アーキテクチャと設計方針（概要レベル）
 - [詳細設計書](docs/詳細設計書.md) - 詳細な実装設計
 - [エラーハンドリング仕様書](docs/エラーハンドリング仕様書.md) - エラー処理の方針と実装仕様
+- [リファクタリング改善案](docs/リファクタリング改善案.md) - モダンな設計への移行計画
 
 ### 開発ガイド
 
@@ -209,6 +238,49 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 - [GitHub認証トラブルシューティング](docs/GitHub認証トラブルシューティング.md) - GitHub認証の問題解決
 
 詳細なAPI仕様については、[API仕様書](docs/API仕様書.md)を参照してください。開発環境では、Swagger UI（`/swagger`）でもAPI仕様を確認できます。
+
+## コード品質管理
+
+このプロジェクトでは、以下のツールを使用してコード品質を維持しています：
+
+### 静的解析ツール
+
+- **.editorconfig**: コーディングスタイルの統一
+- **Roslyn Analyzers**: .NET標準の静的解析（AnalysisMode: All）
+- **StyleCop Analyzers**: コーディング規約の強制
+- **SonarAnalyzer.CSharp**: バグ・脆弱性検出
+- **Roslynator**: コード改善提案
+
+### ロギング
+
+- **Serilog**: 構造化ログによる高度なログ分析
+  - コンソール出力（開発環境）
+  - ファイル出力（本番環境、ローテーション付き）
+  - Seq統合（開発環境でのログ可視化）
+
+### バリデーション
+
+- **FluentValidation**: 宣言的で読みやすいバリデーションルール
+- **MediatRパイプライン**: 自動バリデーション実行
+
+## 今後の改善計画
+
+モダンな設計パターンへの段階的な移行を計画しています。詳細は [リファクタリング改善案](docs/リファクタリング改善案.md) を参照してください：
+
+### 優先度: 高
+- ✅ Resultパターンの導入（計画中）
+- ✅ グローバル例外ハンドラーの実装（計画中）
+- ✅ MediatR + CQRS実装（計画中）
+- ✅ FluentValidation導入（計画中）
+
+### 優先度: 中
+- 🔄 ImageSharpへの移行（System.Drawing.Commonから）
+- 🔄 Serilog導入（構造化ログ）
+- 🔄 静的解析ツール強化
+
+### 優先度: 低
+- 📋 ドメインイベントの導入
+- 📋 Minimal API検討
 
 ## ライセンス
 
