@@ -1,0 +1,6 @@
+@ImgResizer.Api_HostAddress = http://localhost:5172
+
+GET {{ImgResizer.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
