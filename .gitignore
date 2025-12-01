@@ -70,3 +70,8 @@ Desktop.ini
 *.temp
 *~
 
+## ビルドログ
+build-output.txt
+build-warnings.txt
+build.log
+*.log
