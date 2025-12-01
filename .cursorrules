@@ -7,36 +7,37 @@
 ## 技術スタック
 - **言語**: C# (.NET 8.0)
 - **フレームワーク**: ASP.NET Core WebAPI
-- **アーキテクチャ**: クリーンアーキテクチャ + CQRS
-- **画像処理**: SixLabors.ImageSharp（System.Drawing.Commonから移行予定）
-- **ロギング**: Serilog（構造化ログ）
-- **バリデーション**: FluentValidation
-- **メディエーター**: MediatR
-- **静的解析**: Roslyn Analyzers、StyleCop、SonarAnalyzer
+- **アーキテクチャ**: クリーンアーキテクチャ + CQRS（段階的に導入中）
+- **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
+- **エラーハンドリング**: ✅ Resultパターン（実装完了: 2025-12-01）
+- **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
+- **バリデーション**: 実装中（FluentValidation導入予定）
+- **メディエーター**: 未導入（MediatR導入予定）
+- **静的解析**: 未導入（Roslyn Analyzers、StyleCop、SonarAnalyzer導入予定）
 
 ## 開発方針
 
 ### アーキテクチャ原則
 - クリーンアーキテクチャの原則に厳密に従う
-- CQRS（Command Query Responsibility Segregation）パターンを採用
-- MediatRを使用したCommand/Queryの実装
+- CQRS（Command Query Responsibility Segregation）パターンを採用（導入予定）
+- MediatRを使用したCommand/Queryの実装（導入予定）
 - レイヤー間の依存関係を明確に保つ
   - Domain層: 他のレイヤーに依存しない
   - Application層: Domain層のみに依存
   - Infrastructure層: Domain層に依存
   - Presentation層: Application層とInfrastructure層に依存
 - インターフェースによる依存関係の逆転を徹底する
-- Resultパターンを使用（例外駆動からResult駆動へ）
+- ✅ **Resultパターンを使用**（例外駆動からResult駆動へ）**実装完了: 2025-12-01**
 
 ### コーディング規約
-- C# のコーディング規約に従う（.editorconfigで強制）
-- 静的解析ツール（StyleCop、SonarAnalyzer）の警告に従う
+- C# のコーディング規約に従う（.editorconfigで強制予定）
+- 静的解析ツール（StyleCop、SonarAnalyzer）の警告に従う（導入予定）
 - 非同期処理は `async/await` を使用
 - リソース管理は `using` ステートメントを適切に使用
 - null許容参照型を有効に活用
-- Resultパターンで例外を使わない設計を優先
-- バリデーションはFluentValidationを使用
-- 構造化ログ（Serilog）を使用
+- ✅ **Resultパターンで例外を使わない設計を優先**（実装完了）
+- バリデーションはFluentValidationを使用（導入予定）
+- 構造化ログ（Serilogへ移行予定）
 
 ### 命名規則
 - クラス名: PascalCase
@@ -92,27 +93,28 @@ img-resizer/
 1. 既存のアーキテクチャパターンに従う
 2. レイヤー分離を厳守する
 3. インターフェースを定義してから実装する
-4. Resultパターンを使用する（例外を安易に使わない）
-5. FluentValidationでバリデーションを実装する
-6. MediatRを使用してCommand/Queryを実装する
-7. Serilogで構造化ログを実装する
-8. 静的解析ツールの警告に対応する
+4. ✅ **Resultパターンを使用する**（例外を安易に使わない）**実装済み**
+5. FluentValidationでバリデーションを実装する（導入予定）
+6. MediatRを使用してCommand/Queryを実装する（導入予定）
+7. 構造化ログを実装する（Serilog導入予定）
+8. 静的解析ツールの警告に対応する（導入予定）
 
 ### 禁止事項
 1. レイヤー間の直接的な依存関係を作らない
 2. ビジネスロジックをPresentation層に書かない
 3. 外部ライブラリへの直接依存をDomain層に作らない
 4. ハードコードされた値を使用しない（設定ファイルから読み込む）
-5. 正常系フローで例外を使わない（Resultパターンを使用）
-6. バリデーションロジックをUseCaseに直接書かない
+5. ✅ **正常系フローで例外を使わない**（Resultパターンを使用）**実装済み**
+6. バリデーションロジックをUseCaseに直接書かない（FluentValidation導入予定）
 
 ### 画像処理の実装
-- SixLabors.ImageSharpを使用（クロスプラットフォーム対応）
+- 現在: System.Drawing.Common（Windows専用）
+- 移行予定: SixLabors.ImageSharp（クロスプラットフォーム対応）
 - アスペクト比を維持したリサイズ
 - 高品質なリサンプリングアルゴリズムを使用
 - メモリリークを防ぐため、`using` ステートメントでリソースを適切に解放
 - 非同期I/O操作を使用
-- CancellationTokenを適切に使用
+- CancellationTokenを適切に使用（今後追加予定）
 
 ### セキュリティ
 - パストラバーサル攻撃を防止
@@ -128,12 +130,15 @@ img-resizer/
 - FluentAssertionsを使用した読みやすいアサーション
 
 ## エラーハンドリング
-- Resultパターンを使用（正常系と異常系の明示的な分離）
+- ✅ **Resultパターンを使用**（正常系と異常系の明示的な分離）**実装完了: 2025-12-01**
+  - Domain層に`Result`クラスと`Result<T>`クラスを実装
+  - Infrastructure層、Application層、Presentation層で全面的に採用
+  - Controllerのコード量を約50%削減（115行→55行）
 - カスタム例外クラスは例外的な状況でのみ使用
-- グローバル例外ハンドラーで一元管理
-- エラーコードを定義（エラーハンドリング仕様書参照）
-- 適切なHTTPステータスコードを返却
-- Serilogでエラーログを記録
+- グローバル例外ハンドラーで一元管理（導入予定）
+- ✅ エラーコードを定義（エラーハンドリング仕様書参照）
+- ✅ 適切なHTTPステータスコードを返却
+- エラーログを記録（構造化ログへ移行予定）
 - 詳細は `docs/エラーハンドリング仕様書.md` を参照
 
 ## API設計
@@ -172,21 +177,49 @@ img-resizer/
 - CI/CDパイプラインで自動チェック
 
 ## ロギング
-- Serilogを使用した構造化ログ
-- ログレベルの適切な使用（Verbose, Debug, Information, Warning, Error, Fatal）
-- 構造化プロパティを使用（`{PropertyName}`記法）
-- LogContextで追加プロパティを設定
-- 開発環境ではSeqを使用したログ可視化
+- 現在: Microsoft.Extensions.Logging
+- 移行予定: Serilogを使用した構造化ログ
+- ログレベルの適切な使用（Debug, Information, Warning, Error）
+- 構造化プロパティを使用予定（`{PropertyName}`記法）
+- LogContextで追加プロパティを設定予定
+- 開発環境ではSeqを使用したログ可視化予定
 
 ## モダンな設計パターン
-- **Resultパターン**: 例外駆動からResult駆動へ
-- **CQRSパターン**: Command/Queryの明確な分離
-- **MediatRパイプライン**: バリデーション、ログ、トランザクション管理
+
+### 実装済み
+- ✅ **Resultパターン** (2025-12-01): 例外駆動からResult駆動へ
+  - `ImgResizer.Domain.Common.Result`および`Result<T>`を実装
+  - 全レイヤーで採用完了
+
+### 導入予定（優先度: 高）
+- **グローバル例外ハンドラー**: Controllerの重複コード削減
+- **FluentValidation**: バリデーションロジックの分離
+- **MediatR + CQRS**: Command/Queryの明確な分離
+- **静的解析ツール**: .editorconfig、StyleCop、SonarAnalyzer
+
+### 導入予定（優先度: 中）
+- **ImageSharp**: System.Drawing.Commonからの移行
+- **Serilog**: 構造化ログの強化
+- **設定クラスの強化**: IValidateOptions<T>による検証
+
+### 検討中（優先度: 低）
 - **ドメインイベント**: ビジネスイベントの明示的な表現
-- **Minimal API**: 軽量でモダンなAPI設計（検討中）
+- **Minimal API**: 軽量でモダンなAPI設計
 
 ## リファクタリング
+
+### 実施済み
+- ✅ **フェーズ1-1: Resultパターン導入** (2025-12-01)
+  - 実装完了、ビルド成功、アプリケーション正常稼働確認済み
+
+### 次のステップ（フェーズ1残タスク）
+- グローバル例外ハンドラーの実装
+- FluentValidation導入
+- 静的解析ツール導入
+
+### リファクタリング方針
 - モダンな設計への移行は段階的に実施
 - 詳細は `docs/リファクタリング改善案.md` を参照
 - 既存コードとの互換性を保ちながら改善
+- ビルドエラーゼロを維持しながら進める
 

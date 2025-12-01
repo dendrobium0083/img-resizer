@@ -1,5 +1,5 @@
 using ImgResizer.Application.DTOs;
-using ImgResizer.Domain.Exceptions;
+using ImgResizer.Domain.Common;
 using ImgResizer.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,65 +29,74 @@ public class ResizeImageUseCase
         _logger = logger;
     }
 
-    public async Task<ResizeImageResponse> ExecuteAsync(ResizeImageRequest request)
+    public async Task<Result<ResizeImageResponse>> ExecuteAsync(ResizeImageRequest request)
     {
         try
         {
-            _logger.LogDebug("画像変換処理開始: {FilePath}, ResizeMode: {ResizeMode}", 
+            _logger.LogDebug("画像変換処理開始: FilePath={FilePath}, ResizeMode={ResizeMode}", 
                 request.FilePath, request.ResizeMode ?? "fit");
 
             // バリデーション
-            ValidateRequest(request);
+            var validationResult = ValidateRequest(request);
+            if (validationResult.IsFailure)
+            {
+                return Result.Failure<ResizeImageResponse>(
+                    validationResult.ErrorCode, 
+                    validationResult.ErrorMessage);
+            }
 
             // ファイル存在確認
             if (!_imageRepository.FileExists(request.FilePath))
             {
-                throw new Domain.Exceptions.FileNotFoundException(request.FilePath);
+                _logger.LogWarning("ファイルが見つかりません: {FilePath}", request.FilePath);
+                return Result.Failure<ResizeImageResponse>(
+                    "FILE_NOT_FOUND",
+                    $"ファイルが見つかりません: {request.FilePath}");
             }
 
             // 拡張子チェック
             var extension = Path.GetExtension(request.FilePath).ToLower();
             if (!_imageResizeService.IsSupportedFormat(request.FilePath))
             {
-                throw new UnsupportedFormatException(extension);
+                _logger.LogWarning("サポートされていない画像形式: {Extension}", extension);
+                return Result.Failure<ResizeImageResponse>(
+                    "UNSUPPORTED_FORMAT",
+                    $"サポートされていない画像形式です: {extension}");
             }
 
             // ファイルサイズチェック
             var fileInfo = new FileInfo(request.FilePath);
             if (fileInfo.Length > _settings.Value.MaxFileSize)
             {
-                throw new FileTooLargeException(fileInfo.Length, _settings.Value.MaxFileSize);
+                _logger.LogWarning("ファイルサイズ超過: {FileSize} bytes (上限: {MaxFileSize} bytes)", 
+                    fileInfo.Length, _settings.Value.MaxFileSize);
+                return Result.Failure<ResizeImageResponse>(
+                    "FILE_TOO_LARGE",
+                    $"ファイルサイズが大きすぎます。上限: {_settings.Value.MaxFileSize / (1024 * 1024)}MB");
             }
 
             // 画像読み込み
-            byte[] imageData;
-            try
+            var imageDataResult = await _imageRepository.ReadImageAsync(request.FilePath);
+            if (imageDataResult.IsFailure)
             {
-                imageData = await _imageRepository.ReadImageAsync(request.FilePath);
-            }
-            catch (Domain.Exceptions.FileNotFoundException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                throw new FileReadException(request.FilePath, ex);
+                return Result.Failure<ResizeImageResponse>(
+                    imageDataResult.ErrorCode,
+                    imageDataResult.ErrorMessage);
             }
 
             // 画像変換
             var resizeMode = request.ResizeMode ?? "fit";
-            byte[] resizedImageData;
-            try
+            var resizedImageDataResult = await _imageResizeService.ResizeToSquareAsync(
+                imageDataResult.Value, 
+                _settings.Value.TargetSize.Width, 
+                resizeMode,
+                extension);
+
+            if (resizedImageDataResult.IsFailure)
             {
-                resizedImageData = await _imageResizeService.ResizeToSquareAsync(
-                    imageData, 
-                    _settings.Value.TargetSize.Width, 
-                    resizeMode,
-                    extension);
-            }
-            catch (Exception ex)
-            {
-                throw new ImageProcessingErrorException("画像変換処理に失敗しました", ex);
+                return Result.Failure<ResizeImageResponse>(
+                    resizedImageDataResult.ErrorCode,
+                    resizedImageDataResult.ErrorMessage);
             }
 
             // 出力パス生成
@@ -97,51 +106,48 @@ public class ResizeImageUseCase
                 resizeMode);
 
             // 画像保存
-            try
+            var saveResult = await _imageRepository.SaveImageAsync(outputPath, resizedImageDataResult.Value);
+            if (saveResult.IsFailure)
             {
-                await _imageRepository.SaveImageAsync(outputPath, resizedImageData);
-            }
-            catch (Exception ex)
-            {
-                throw new FileWriteException(outputPath, ex);
+                return Result.Failure<ResizeImageResponse>(
+                    saveResult.ErrorCode,
+                    saveResult.ErrorMessage);
             }
 
-            _logger.LogInformation("画像変換処理完了: {OutputPath}, ResizeMode: {ResizeMode}", 
+            _logger.LogInformation("画像変換処理完了: OutputPath={OutputPath}, ResizeMode={ResizeMode}", 
                 outputPath, resizeMode);
 
-            return new ResizeImageResponse
+            return Result.Success(new ResizeImageResponse
             {
                 Success = true,
                 Message = "画像を512×512に変換しました",
                 OutputPath = outputPath,
                 ResizeMode = resizeMode
-            };
-        }
-        catch (ImageProcessingException)
-        {
-            // Domain層の例外はそのまま再スロー
-            throw;
+            });
         }
         catch (Exception ex)
         {
-            // 予期しない例外はラップ
+            // 予期しない例外をキャッチ
             _logger.LogError(ex, "予期しないエラーが発生しました: {FilePath}", request.FilePath);
-            throw new ImageProcessingException("INTERNAL_SERVER_ERROR",
-                "予期しないエラーが発生しました", ex);
+            return Result.Failure<ResizeImageResponse>(
+                "INTERNAL_SERVER_ERROR",
+                "予期しないエラーが発生しました");
         }
     }
 
-    private void ValidateRequest(ResizeImageRequest request)
+    private Result ValidateRequest(ResizeImageRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.FilePath))
         {
-            throw new ValidationException("ファイルパスが指定されていません");
+            _logger.LogWarning("バリデーションエラー: ファイルパスが指定されていません");
+            return Result.Failure("VALIDATION_ERROR", "ファイルパスが指定されていません");
         }
 
         // パストラバーサルチェック
         if (request.FilePath.Contains("..") || request.FilePath.Contains("~"))
         {
-            throw new ValidationException("無効なファイルパスです");
+            _logger.LogWarning("バリデーションエラー: 無効なファイルパス: {FilePath}", request.FilePath);
+            return Result.Failure("VALIDATION_ERROR", "無効なファイルパスです");
         }
 
         // resizeModeの検証
@@ -149,9 +155,13 @@ public class ResizeImageUseCase
         var resizeMode = request.ResizeMode ?? "fit";
         if (!validModes.Contains(resizeMode.ToLower()))
         {
-            throw new ValidationException(
+            _logger.LogWarning("バリデーションエラー: 無効な変換方式: {ResizeMode}", resizeMode);
+            return Result.Failure(
+                "VALIDATION_ERROR",
                 $"無効な変換方式です: {resizeMode}。有効な値は 'fit' または 'crop' です。");
         }
+
+        return Result.Success();
     }
 }
 

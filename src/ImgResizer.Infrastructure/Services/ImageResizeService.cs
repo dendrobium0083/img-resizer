@@ -1,6 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using ImgResizer.Domain.Exceptions;
+using ImgResizer.Domain.Common;
 using ImgResizer.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,7 +24,7 @@ public class ImageResizeService : IImageResizeService
         _settings = settings;
     }
 
-    public async Task<byte[]> ResizeToSquareAsync(byte[] imageData, int size, string resizeMode, string extension)
+    public async Task<Result<byte[]>> ResizeToSquareAsync(byte[] imageData, int size, string resizeMode, string extension)
     {
         return await Task.Run(() =>
         {
@@ -45,13 +45,31 @@ public class ImageResizeService : IImageResizeService
                     result = ResizeWithFit(originalImage, size, extension);
                 }
 
-                _logger.LogDebug("画像リサイズ処理完了: Size={Size}, Mode={ResizeMode}", size, resizeMode);
-                return result;
+                _logger.LogDebug("画像リサイズ処理完了: Size={Size}, Mode={ResizeMode}, ResultSize={ResultSize} bytes", 
+                    size, resizeMode, result.Length);
+                
+                return Result.Success(result);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogError(ex, "無効な画像データ: Mode={ResizeMode}", resizeMode);
+                return Result.Failure<byte[]>(
+                    "IMAGE_LOAD_ERROR",
+                    "画像データの読み込みに失敗しました。画像ファイルが破損している可能性があります。");
+            }
+            catch (OutOfMemoryException ex)
+            {
+                _logger.LogError(ex, "メモリ不足エラー: Mode={ResizeMode}", resizeMode);
+                return Result.Failure<byte[]>(
+                    "IMAGE_PROCESSING_ERROR",
+                    "画像のリサイズ処理中にメモリ不足が発生しました。");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "画像リサイズ処理エラー: Mode={ResizeMode}", resizeMode);
-                throw new ImageProcessingErrorException("画像リサイズ処理に失敗しました", ex);
+                return Result.Failure<byte[]>(
+                    "IMAGE_PROCESSING_ERROR",
+                    $"画像リサイズ処理に失敗しました: {ex.Message}");
             }
         });
     }

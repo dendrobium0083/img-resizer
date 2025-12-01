@@ -1,3 +1,5 @@
+using ImgResizer.Domain.Common;
+
 namespace ImgResizer.Domain.Interfaces;
 
 /// <summary>
@@ -9,15 +11,16 @@ public interface IImageRepository
     /// 画像ファイルを非同期で読み込む
     /// </summary>
     /// <param name="filePath">ファイルパス</param>
-    /// <returns>画像データ（バイト配列）</returns>
-    Task<byte[]> ReadImageAsync(string filePath);
+    /// <returns>画像データ（バイト配列）を含むResult</returns>
+    Task<Result<byte[]>> ReadImageAsync(string filePath);
 
     /// <summary>
     /// 画像データを非同期で保存する
     /// </summary>
     /// <param name="filePath">保存先のファイルパス</param>
     /// <param name="imageData">画像データ（バイト配列）</param>
-    Task SaveImageAsync(string filePath, byte[] imageData);
+    /// <returns>処理結果を表すResult</returns>
+    Task<Result> SaveImageAsync(string filePath, byte[] imageData);
 
     /// <summary>
     /// ファイルの存在を確認する

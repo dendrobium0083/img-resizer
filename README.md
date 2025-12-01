@@ -12,11 +12,12 @@
 - **言語**: C#
 - **アーキテクチャ**: クリーンアーキテクチャ + CQRS
 - **API**: ASP.NET Core WebAPI
-- **画像処理**: SixLabors.ImageSharp（System.Drawing.Commonから移行予定）
-- **ロギング**: Serilog（構造化ログ）
-- **バリデーション**: FluentValidation
-- **メディエーター**: MediatR
-- **静的解析**: Roslyn Analyzers、StyleCop、SonarAnalyzer
+- **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
+- **エラーハンドリング**: Resultパターン（例外駆動から脱却）✅
+- **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
+- **バリデーション**: 実装中（FluentValidation導入予定）
+- **メディエーター**: 未導入（MediatR導入予定）
+- **静的解析**: 未導入（Roslyn Analyzers、StyleCop導入予定）
 
 ## 機能
 
@@ -268,10 +269,10 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 モダンな設計パターンへの段階的な移行を計画しています。詳細は [リファクタリング改善案](docs/リファクタリング改善案.md) を参照してください：
 
 ### 優先度: 高
-- ✅ Resultパターンの導入（計画中）
-- ✅ グローバル例外ハンドラーの実装（計画中）
-- ✅ MediatR + CQRS実装（計画中）
-- ✅ FluentValidation導入（計画中）
+- ✅ **Resultパターンの導入**（**完了: 2025-12-01**）
+- 📋 グローバル例外ハンドラーの実装（計画中）
+- 📋 MediatR + CQRS実装（計画中）
+- 📋 FluentValidation導入（計画中）
 
 ### 優先度: 中
 - 🔄 ImageSharpへの移行（System.Drawing.Commonから）

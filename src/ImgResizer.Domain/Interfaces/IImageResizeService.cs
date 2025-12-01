@@ -1,3 +1,5 @@
+using ImgResizer.Domain.Common;
+
 namespace ImgResizer.Domain.Interfaces;
 
 /// <summary>
@@ -12,8 +14,8 @@ public interface IImageResizeService
     /// <param name="size">ターゲットサイズ（512）</param>
     /// <param name="resizeMode">変換方式（fit または crop）</param>
     /// <param name="extension">画像の拡張子</param>
-    /// <returns>リサイズ後の画像データ（バイト配列）</returns>
-    Task<byte[]> ResizeToSquareAsync(byte[] imageData, int size, string resizeMode, string extension);
+    /// <returns>リサイズ後の画像データ（バイト配列）を含むResult</returns>
+    Task<Result<byte[]>> ResizeToSquareAsync(byte[] imageData, int size, string resizeMode, string extension);
 
     /// <summary>
     /// サポートされている画像形式か判定する

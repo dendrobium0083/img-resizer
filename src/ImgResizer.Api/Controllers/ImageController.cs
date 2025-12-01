@@ -1,6 +1,5 @@
 using ImgResizer.Application.DTOs;
 using ImgResizer.Application.UseCases;
-using ImgResizer.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ImgResizer.Api.Controllers;
@@ -32,84 +31,38 @@ public class ImageController : ControllerBase
     public async Task<ActionResult<ResizeImageResponse>> ResizeImage(
         [FromBody] ResizeImageRequest request)
     {
-        try
-        {
-            _logger.LogInformation("画像変換リクエスト受信: {FilePath}, ResizeMode: {ResizeMode}", 
-                request.FilePath, request.ResizeMode ?? "fit");
+        _logger.LogInformation("画像変換リクエスト受信: FilePath={FilePath}, ResizeMode={ResizeMode}", 
+            request.FilePath, request.ResizeMode ?? "fit");
 
-            var response = await _resizeImageUseCase.ExecuteAsync(request);
+        var result = await _resizeImageUseCase.ExecuteAsync(request);
 
-            if (response.Success)
-            {
-                _logger.LogInformation("画像変換処理完了: {OutputPath}", response.OutputPath);
-                return Ok(response);
-            }
+        if (result.IsSuccess)
+        {
+            _logger.LogInformation("画像変換処理完了: OutputPath={OutputPath}", result.Value.OutputPath);
+            return Ok(result.Value);
+        }
 
-            _logger.LogWarning("画像変換処理失敗: {ErrorCode}, {Message}", 
-                response.ErrorCode, response.Message);
-            return BadRequest(response);
-        }
-        catch (Domain.Exceptions.FileNotFoundException ex)
+        // エラーコードに基づいてHTTPステータスコードを決定
+        var errorResponse = new ResizeImageResponse
         {
-            _logger.LogWarning(ex, "ファイルが見つかりません: {FilePath}", request.FilePath);
-            return NotFound(new ResizeImageResponse
-            {
-                Success = false,
-                Message = ex.Message,
-                ErrorCode = ex.ErrorCode
-            });
-        }
-        catch (ValidationException ex)
+            Success = false,
+            ErrorCode = result.ErrorCode,
+            Message = result.ErrorMessage
+        };
+
+        return result.ErrorCode switch
         {
-            _logger.LogWarning(ex, "バリデーションエラー: {Message}", ex.Message);
-            return BadRequest(new ResizeImageResponse
-            {
-                Success = false,
-                Message = ex.Message,
-                ErrorCode = ex.ErrorCode
-            });
-        }
-        catch (UnsupportedFormatException ex)
-        {
-            _logger.LogWarning(ex, "サポートされていない画像形式: {Message}", ex.Message);
-            return BadRequest(new ResizeImageResponse
-            {
-                Success = false,
-                Message = ex.Message,
-                ErrorCode = ex.ErrorCode
-            });
-        }
-        catch (FileTooLargeException ex)
-        {
-            _logger.LogWarning(ex, "ファイルサイズ超過: {Message}", ex.Message);
-            return BadRequest(new ResizeImageResponse
-            {
-                Success = false,
-                Message = ex.Message,
-                ErrorCode = ex.ErrorCode
-            });
-        }
-        catch (ImageProcessingException ex)
-        {
-            _logger.LogError(ex, "画像処理エラー: {ErrorCode}, {Message}",
-                ex.ErrorCode, ex.Message);
-            return StatusCode(500, new ResizeImageResponse
-            {
-                Success = false,
-                Message = ex.Message,
-                ErrorCode = ex.ErrorCode
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "予期しないエラーが発生しました: {FilePath}", request.FilePath);
-            return StatusCode(500, new ResizeImageResponse
-            {
-                Success = false,
-                Message = "サーバーエラーが発生しました",
-                ErrorCode = "INTERNAL_SERVER_ERROR"
-            });
-        }
+            "FILE_NOT_FOUND" => NotFound(errorResponse),
+            "VALIDATION_ERROR" => BadRequest(errorResponse),
+            "UNSUPPORTED_FORMAT" => BadRequest(errorResponse),
+            "FILE_TOO_LARGE" => BadRequest(errorResponse),
+            "FILE_READ_ERROR" => StatusCode(500, errorResponse),
+            "FILE_WRITE_ERROR" => StatusCode(500, errorResponse),
+            "IMAGE_LOAD_ERROR" => BadRequest(errorResponse),
+            "IMAGE_PROCESSING_ERROR" => StatusCode(500, errorResponse),
+            "INTERNAL_SERVER_ERROR" => StatusCode(500, errorResponse),
+            _ => StatusCode(500, errorResponse)
+        };
     }
 }
 
