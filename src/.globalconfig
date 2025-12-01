@@ -14,6 +14,9 @@ dotnet_diagnostic.SA1200.severity = none
 # SA1309: フィールド名はアンダースコアで始まらない（プロジェクトの命名規則に従うため無効化）
 dotnet_diagnostic.SA1309.severity = none
 
+# SA1629: ドキュメントコメントがピリオドで終わる必要がある（日本語コメントでは不要）
+dotnet_diagnostic.SA1629.severity = none
+
 # SA1413: 末尾のカンマを使用する（オプション）
 dotnet_diagnostic.SA1413.severity = suggestion
 
