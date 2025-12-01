@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ImgResizer.Api.Controllers;
 
 /// <summary>
-/// 画像変換APIコントローラー
+/// 画像変換APIコントローラー。
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -23,16 +23,18 @@ public class ImageController : ControllerBase
     }
 
     /// <summary>
-    /// 画像を512×512の正方形に変換する
+    /// 画像を512×512の正方形に変換します。
     /// </summary>
-    /// <param name="request">リクエスト</param>
-    /// <returns>変換結果</returns>
+    /// <param name="request">リクエスト.</param>
+    /// <returns>変換結果.</returns>
     [HttpPost("resize")]
     public async Task<ActionResult<ResizeImageResponse>> ResizeImage(
         [FromBody] ResizeImageRequest request)
     {
-        _logger.LogInformation("画像変換リクエスト受信: FilePath={FilePath}, ResizeMode={ResizeMode}", 
-            request.FilePath, request.ResizeMode ?? "fit");
+        _logger.LogInformation(
+            "画像変換リクエスト受信: FilePath={FilePath}, ResizeMode={ResizeMode}",
+            request.FilePath,
+            request.ResizeMode ?? "fit");
 
         var result = await _resizeImageUseCase.ExecuteAsync(request);
 

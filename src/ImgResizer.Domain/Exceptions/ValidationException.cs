@@ -1,13 +1,11 @@
-namespace ImgResizer.Domain.Exceptions;
-
+﻿namespace ImgResizer.Domain.Exceptions;
 /// <summary>
-/// バリデーションエラーの例外
+/// 繝舌Μ繝・・繧ｷ繝ｧ繝ｳ繧ｨ繝ｩ繝ｼ縺ｮ萓句､・
 /// </summary>
 public class ValidationException : ImageProcessingException
 {
-    public ValidationException(string message) 
+    public ValidationException(string message)
         : base("INVALID_REQUEST", message)
     {
     }
 }
-

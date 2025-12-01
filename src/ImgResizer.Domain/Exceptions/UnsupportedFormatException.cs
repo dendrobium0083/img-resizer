@@ -1,13 +1,11 @@
-namespace ImgResizer.Domain.Exceptions;
-
+﻿namespace ImgResizer.Domain.Exceptions;
 /// <summary>
-/// サポートされていない画像形式の場合の例外
+/// 繧ｵ繝昴・繝医＆繧後※縺・↑縺・判蜒丞ｽ｢蠑上・蝣ｴ蜷医・萓句､・
 /// </summary>
 public class UnsupportedFormatException : ImageProcessingException
 {
-    public UnsupportedFormatException(string extension) 
-        : base("INVALID_FILE_FORMAT", $"サポートされていない画像形式です: {extension}")
+    public UnsupportedFormatException(string extension)
+        : base("INVALID_FILE_FORMAT", $"繧ｵ繝昴・繝医＆繧後※縺・↑縺・判蜒丞ｽ｢蠑上〒縺・ {extension}")
     {
     }
 }
-

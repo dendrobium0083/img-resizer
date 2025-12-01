@@ -1,15 +1,13 @@
-namespace ImgResizer.Domain.Exceptions;
-
+﻿namespace ImgResizer.Domain.Exceptions;
 /// <summary>
-/// 画像の読み込みに失敗した場合の例外
+/// 逕ｻ蜒上・隱ｭ縺ｿ霎ｼ縺ｿ縺ｫ螟ｱ謨励＠縺溷ｴ蜷医・萓句､・
 /// </summary>
 public class ImageLoadException : ImageProcessingException
 {
-    public ImageLoadException(string filePath, Exception innerException) 
-        : base("IMAGE_LOAD_ERROR", 
-            $"画像の読み込みに失敗しました: {filePath}", 
+    public ImageLoadException(string filePath, Exception innerException)
+        : base("IMAGE_LOAD_ERROR",
+            $"逕ｻ蜒上・隱ｭ縺ｿ霎ｼ縺ｿ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: {filePath}",
             innerException)
     {
     }
 }
-

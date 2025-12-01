@@ -1,20 +1,17 @@
-namespace ImgResizer.Domain.Exceptions;
-
+﻿namespace ImgResizer.Domain.Exceptions;
 /// <summary>
-/// ファイルサイズが大きすぎる場合の例外
+/// 繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟､ｧ縺阪☆縺弱ｋ蝣ｴ蜷医・萓句､・
 /// </summary>
 public class FileTooLargeException : ImageProcessingException
 {
-    public FileTooLargeException(long fileSize, long maxSize) 
-        : base("FILE_TOO_LARGE", 
-            $"ファイルサイズが大きすぎます。現在: {FormatFileSize(fileSize)}、最大: {FormatFileSize(maxSize)}")
+    public FileTooLargeException(long fileSize, long maxSize)
+        : base("FILE_TOO_LARGE",
+            $"繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ縺悟､ｧ縺阪☆縺弱∪縺吶ら樟蝨ｨ: {FormatFileSize(fileSize)}縲∵怙螟ｧ: {FormatFileSize(maxSize)}")
     {
     }
-
     private static string FormatFileSize(long bytes)
     {
-        // ファイルサイズを読みやすい形式に変換（例: "50MB"）
+        // 繝輔ぃ繧､繝ｫ繧ｵ繧､繧ｺ繧定ｪｭ縺ｿ繧・☆縺・ｽ｢蠑上↓螟画鋤・井ｾ・ "50MB"・・
         return $"{bytes / 1024 / 1024}MB";
     }
 }
-
