@@ -15,6 +15,12 @@ public class GlobalExceptionHandlerMiddleware
     private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger;
     private readonly IHostEnvironment _environment;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="next">次のミドルウェア</param>
+    /// <param name="logger">ロガー</param>
+    /// <param name="environment">ホスト環境</param>
     public GlobalExceptionHandlerMiddleware(
         RequestDelegate next,
         ILogger<GlobalExceptionHandlerMiddleware> logger,
@@ -25,6 +31,11 @@ public class GlobalExceptionHandlerMiddleware
         _environment = environment;
     }
 
+    /// <summary>
+    /// ミドルウェアの処理を実行する
+    /// </summary>
+    /// <param name="context">HTTPコンテキスト</param>
+    /// <returns>非同期タスク</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -40,6 +51,12 @@ public class GlobalExceptionHandlerMiddleware
         }
     }
 
+    /// <summary>
+    /// 例外を処理してエラーレスポンスを返す
+    /// </summary>
+    /// <param name="context">HTTPコンテキスト</param>
+    /// <param name="exception">発生した例外</param>
+    /// <returns>非同期タスク</returns>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         // HTTPステータスコードとエラーレスポンスを決定
@@ -101,6 +118,12 @@ public class GlobalExceptionHandlerMiddleware
         await context.Response.WriteAsync(json);
     }
 
+    /// <summary>
+    /// エラーレスポンスを作成する
+    /// </summary>
+    /// <param name="errorCode">エラーコード</param>
+    /// <param name="message">エラーメッセージ</param>
+    /// <returns>エラーレスポンス</returns>
     private static ResizeImageResponse CreateErrorResponse(string errorCode, string message)
     {
         return new ResizeImageResponse

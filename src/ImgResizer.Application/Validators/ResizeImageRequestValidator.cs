@@ -12,6 +12,10 @@ public class ResizeImageRequestValidator : AbstractValidator<ResizeImageRequest>
 {
     private readonly IOptions<ImageResizeSettings> _settings;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="settings">画像リサイズ設定</param>
     public ResizeImageRequestValidator(IOptions<ImageResizeSettings> settings)
     {
         _settings = settings;
@@ -60,12 +64,22 @@ public class ResizeImageRequestValidator : AbstractValidator<ResizeImageRequest>
             .When(x => !string.IsNullOrEmpty(x.FilePath) && File.Exists(x.FilePath));
     }
 
+    /// <summary>
+    /// ファイルの拡張子が許可されているかを検証する
+    /// </summary>
+    /// <param name="filePath">ファイルパス</param>
+    /// <returns>許可されている拡張子の場合true</returns>
     private bool HasValidExtension(string filePath)
     {
         var extension = Path.GetExtension(filePath).ToLower();
         return _settings.Value.AllowedExtensions.Contains(extension);
     }
 
+    /// <summary>
+    /// ファイルサイズが許可範囲内かを検証する
+    /// </summary>
+    /// <param name="filePath">ファイルパス</param>
+    /// <returns>許可範囲内の場合true</returns>
     private bool IsFileSizeValid(string filePath)
     {
         if (!File.Exists(filePath)) return true;

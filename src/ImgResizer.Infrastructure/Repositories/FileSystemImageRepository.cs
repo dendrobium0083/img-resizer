@@ -14,6 +14,11 @@ public class FileSystemImageRepository : IImageRepository
     private readonly IOptions<ImageResizeSettings> _settings;
     private readonly ILogger<FileSystemImageRepository> _logger;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="settings">画像リサイズ設定</param>
+    /// <param name="logger">ロガー</param>
     public FileSystemImageRepository(
         IOptions<ImageResizeSettings> settings,
         ILogger<FileSystemImageRepository> logger)
@@ -22,6 +27,11 @@ public class FileSystemImageRepository : IImageRepository
         _logger = logger;
     }
 
+    /// <summary>
+    /// 画像ファイルを読み込む
+    /// </summary>
+    /// <param name="filePath">ファイルパス</param>
+    /// <returns>画像データ（バイト配列）を含むResult</returns>
     public async Task<Result<byte[]>> ReadImageAsync(string filePath)
     {
         try
@@ -56,6 +66,12 @@ public class FileSystemImageRepository : IImageRepository
         }
     }
 
+    /// <summary>
+    /// 画像ファイルを保存する
+    /// </summary>
+    /// <param name="filePath">保存先ファイルパス</param>
+    /// <param name="imageData">画像データ（バイト配列）</param>
+    /// <returns>処理結果を含むResult</returns>
     public async Task<Result> SaveImageAsync(string filePath, byte[] imageData)
     {
         try
@@ -90,11 +106,23 @@ public class FileSystemImageRepository : IImageRepository
         }
     }
 
+    /// <summary>
+    /// ファイルが存在するか確認する
+    /// </summary>
+    /// <param name="filePath">ファイルパス</param>
+    /// <returns>存在する場合true</returns>
     public bool FileExists(string filePath)
     {
         return File.Exists(filePath);
     }
 
+    /// <summary>
+    /// 出力ファイルパスを生成する
+    /// </summary>
+    /// <param name="inputPath">入力ファイルパス</param>
+    /// <param name="outputDirectory">出力ディレクトリ</param>
+    /// <param name="resizeMode">リサイズモード</param>
+    /// <returns>出力ファイルパス</returns>
     public string GetOutputPath(string inputPath, string outputDirectory, string resizeMode)
     {
         var fileName = Path.GetFileNameWithoutExtension(inputPath);

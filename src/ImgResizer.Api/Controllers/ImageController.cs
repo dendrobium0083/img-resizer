@@ -14,6 +14,11 @@ public class ImageController : ControllerBase
     private readonly ResizeImageUseCase _resizeImageUseCase;
     private readonly ILogger<ImageController> _logger;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="resizeImageUseCase">画像リサイズユースケース</param>
+    /// <param name="logger">ロガー</param>
     public ImageController(
         ResizeImageUseCase resizeImageUseCase,
         ILogger<ImageController> logger)

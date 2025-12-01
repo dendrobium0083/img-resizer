@@ -16,6 +16,11 @@ public class ImageResizeService : IImageResizeService
     private readonly ILogger<ImageResizeService> _logger;
     private readonly IOptions<ImageResizeSettings> _settings;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="logger">ロガー</param>
+    /// <param name="settings">画像リサイズ設定</param>
     public ImageResizeService(
         ILogger<ImageResizeService> logger,
         IOptions<ImageResizeSettings> settings)
@@ -24,6 +29,14 @@ public class ImageResizeService : IImageResizeService
         _settings = settings;
     }
 
+    /// <summary>
+    /// 画像を正方形にリサイズする
+    /// </summary>
+    /// <param name="imageData">元画像データ（バイト配列）</param>
+    /// <param name="size">ターゲットサイズ（512）</param>
+    /// <param name="resizeMode">変換方式（fit または crop）</param>
+    /// <param name="extension">画像の拡張子</param>
+    /// <returns>リサイズ後の画像データ（バイト配列）を含むResult</returns>
     public async Task<Result<byte[]>> ResizeToSquareAsync(byte[] imageData, int size, string resizeMode, string extension)
     {
         return await Task.Run(() =>
@@ -74,6 +87,11 @@ public class ImageResizeService : IImageResizeService
         });
     }
 
+    /// <summary>
+    /// サポートされている画像形式か判定する
+    /// </summary>
+    /// <param name="filePath">ファイルパス</param>
+    /// <returns>サポートされている場合true</returns>
     public bool IsSupportedFormat(string filePath)
     {
         var extension = Path.GetExtension(filePath).ToLower();

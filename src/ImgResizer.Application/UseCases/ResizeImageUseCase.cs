@@ -19,6 +19,14 @@ public class ResizeImageUseCase
     private readonly ILogger<ResizeImageUseCase> _logger;
     private readonly IValidator<ResizeImageRequest> _validator;
 
+    /// <summary>
+    /// コンストラクタ
+    /// </summary>
+    /// <param name="imageRepository">画像リポジトリ</param>
+    /// <param name="imageResizeService">画像リサイズサービス</param>
+    /// <param name="settings">画像リサイズ設定</param>
+    /// <param name="logger">ロガー</param>
+    /// <param name="validator">リクエストバリデーター</param>
     public ResizeImageUseCase(
         IImageRepository imageRepository,
         IImageResizeService imageResizeService,
@@ -33,6 +41,11 @@ public class ResizeImageUseCase
         _validator = validator;
     }
 
+    /// <summary>
+    /// 画像リサイズ処理を実行する
+    /// </summary>
+    /// <param name="request">リサイズリクエスト</param>
+    /// <returns>リサイズ処理結果</returns>
     public async Task<Result<ResizeImageResponse>> ExecuteAsync(ResizeImageRequest request)
     {
         try
