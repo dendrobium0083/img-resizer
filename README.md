@@ -15,7 +15,7 @@
 - **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
 - **エラーハンドリング**: Resultパターン + グローバル例外ハンドラー ✅（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
-- **バリデーション**: 実装中（FluentValidation導入予定）
+- **バリデーション**: FluentValidation ✅（実装完了: 2025-12-01）
 - **メディエーター**: 未導入（MediatR導入予定）
 - **静的解析**: 未導入（Roslyn Analyzers、StyleCop導入予定）
 
@@ -271,8 +271,9 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 ### 優先度: 高
 - ✅ **Resultパターンの導入**（**完了: 2025-12-01**）
 - ✅ **グローバル例外ハンドラーの実装**（**完了: 2025-12-01**）
+- ✅ **FluentValidationの導入**（**完了: 2025-12-01**）
 - 📋 MediatR + CQRS実装（次のステップ）
-- 📋 FluentValidation導入（次のステップ）
+- 📋 静的解析ツール導入（次のステップ）
 
 ### 優先度: 中
 - 🔄 ImageSharpへの移行（System.Drawing.Commonから）

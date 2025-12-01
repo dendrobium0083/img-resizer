@@ -1,5 +1,7 @@
+using FluentValidation;
 using ImgResizer.Api.Middleware;
 using ImgResizer.Application.UseCases;
+using ImgResizer.Application.Validators;
 using ImgResizer.Domain.Interfaces;
 using ImgResizer.Infrastructure.Configuration;
 using ImgResizer.Infrastructure.Repositories;
@@ -15,6 +17,9 @@ builder.Services.Configure<ImageResizeSettings>(
 builder.Services.AddScoped<IImageRepository, FileSystemImageRepository>();
 builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
 builder.Services.AddScoped<ResizeImageUseCase>();
+
+// FluentValidationの登録
+builder.Services.AddValidatorsFromAssemblyContaining<ResizeImageRequestValidator>();
 
 // コントローラー
 builder.Services.AddControllers();

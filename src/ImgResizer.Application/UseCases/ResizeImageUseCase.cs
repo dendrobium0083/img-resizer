@@ -1,3 +1,4 @@
+using FluentValidation;
 using ImgResizer.Application.DTOs;
 using ImgResizer.Domain.Common;
 using ImgResizer.Domain.Interfaces;
@@ -16,17 +17,20 @@ public class ResizeImageUseCase
     private readonly IImageResizeService _imageResizeService;
     private readonly IOptions<ImageResizeSettings> _settings;
     private readonly ILogger<ResizeImageUseCase> _logger;
+    private readonly IValidator<ResizeImageRequest> _validator;
 
     public ResizeImageUseCase(
         IImageRepository imageRepository,
         IImageResizeService imageResizeService,
         IOptions<ImageResizeSettings> settings,
-        ILogger<ResizeImageUseCase> logger)
+        ILogger<ResizeImageUseCase> logger,
+        IValidator<ResizeImageRequest> validator)
     {
         _imageRepository = imageRepository;
         _imageResizeService = imageResizeService;
         _settings = settings;
         _logger = logger;
+        _validator = validator;
     }
 
     public async Task<Result<ResizeImageResponse>> ExecuteAsync(ResizeImageRequest request)
@@ -36,44 +40,18 @@ public class ResizeImageUseCase
             _logger.LogDebug("画像変換処理開始: FilePath={FilePath}, ResizeMode={ResizeMode}", 
                 request.FilePath, request.ResizeMode ?? "fit");
 
-            // バリデーション
-            var validationResult = ValidateRequest(request);
-            if (validationResult.IsFailure)
+            // FluentValidationによるバリデーション
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
             {
+                var firstError = validationResult.Errors.First();
+                _logger.LogWarning("バリデーションエラー: {ErrorMessage}", firstError.ErrorMessage);
                 return Result.Failure<ResizeImageResponse>(
-                    validationResult.ErrorCode, 
-                    validationResult.ErrorMessage);
+                    firstError.ErrorCode,
+                    firstError.ErrorMessage);
             }
 
-            // ファイル存在確認
-            if (!_imageRepository.FileExists(request.FilePath))
-            {
-                _logger.LogWarning("ファイルが見つかりません: {FilePath}", request.FilePath);
-                return Result.Failure<ResizeImageResponse>(
-                    "FILE_NOT_FOUND",
-                    $"ファイルが見つかりません: {request.FilePath}");
-            }
-
-            // 拡張子チェック
             var extension = Path.GetExtension(request.FilePath).ToLower();
-            if (!_imageResizeService.IsSupportedFormat(request.FilePath))
-            {
-                _logger.LogWarning("サポートされていない画像形式: {Extension}", extension);
-                return Result.Failure<ResizeImageResponse>(
-                    "UNSUPPORTED_FORMAT",
-                    $"サポートされていない画像形式です: {extension}");
-            }
-
-            // ファイルサイズチェック
-            var fileInfo = new FileInfo(request.FilePath);
-            if (fileInfo.Length > _settings.Value.MaxFileSize)
-            {
-                _logger.LogWarning("ファイルサイズ超過: {FileSize} bytes (上限: {MaxFileSize} bytes)", 
-                    fileInfo.Length, _settings.Value.MaxFileSize);
-                return Result.Failure<ResizeImageResponse>(
-                    "FILE_TOO_LARGE",
-                    $"ファイルサイズが大きすぎます。上限: {_settings.Value.MaxFileSize / (1024 * 1024)}MB");
-            }
 
             // 画像読み込み
             var imageDataResult = await _imageRepository.ReadImageAsync(request.FilePath);
@@ -133,35 +111,6 @@ public class ResizeImageUseCase
                 "INTERNAL_SERVER_ERROR",
                 "予期しないエラーが発生しました");
         }
-    }
-
-    private Result ValidateRequest(ResizeImageRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.FilePath))
-        {
-            _logger.LogWarning("バリデーションエラー: ファイルパスが指定されていません");
-            return Result.Failure("VALIDATION_ERROR", "ファイルパスが指定されていません");
-        }
-
-        // パストラバーサルチェック
-        if (request.FilePath.Contains("..") || request.FilePath.Contains("~"))
-        {
-            _logger.LogWarning("バリデーションエラー: 無効なファイルパス: {FilePath}", request.FilePath);
-            return Result.Failure("VALIDATION_ERROR", "無効なファイルパスです");
-        }
-
-        // resizeModeの検証
-        var validModes = new[] { "fit", "crop" };
-        var resizeMode = request.ResizeMode ?? "fit";
-        if (!validModes.Contains(resizeMode.ToLower()))
-        {
-            _logger.LogWarning("バリデーションエラー: 無効な変換方式: {ResizeMode}", resizeMode);
-            return Result.Failure(
-                "VALIDATION_ERROR",
-                $"無効な変換方式です: {resizeMode}。有効な値は 'fit' または 'crop' です。");
-        }
-
-        return Result.Success();
     }
 }
 
