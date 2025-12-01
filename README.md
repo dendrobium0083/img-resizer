@@ -17,7 +17,7 @@
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: FluentValidation ✅（実装完了: 2025-12-01）
 - **メディエーター**: 未導入（MediatR導入予定）
-- **静的解析**: 未導入（Roslyn Analyzers、StyleCop導入予定）
+- **静的解析**: ✅ Roslyn Analyzers、StyleCop、SonarAnalyzer、Roslynator（実装完了: 2025-12-01）
 
 ## 機能
 
@@ -272,8 +272,8 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 - ✅ **Resultパターンの導入**（**完了: 2025-12-01**）
 - ✅ **グローバル例外ハンドラーの実装**（**完了: 2025-12-01**）
 - ✅ **FluentValidationの導入**（**完了: 2025-12-01**）
+- ✅ **静的解析ツールの導入**（**完了: 2025-12-01**）
 - 📋 MediatR + CQRS実装（次のステップ）
-- 📋 静的解析ツール導入（次のステップ）
 
 ### 優先度: 中
 - 🔄 ImageSharpへの移行（System.Drawing.Commonから）

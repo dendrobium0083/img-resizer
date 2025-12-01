@@ -1,0 +1,46 @@
+is_global = true
+
+# StyleCop Analyzers のルール調整
+
+# SA1633: ファイルヘッダーが必要（無効化）
+dotnet_diagnostic.SA1633.severity = none
+
+# SA1101: プレフィックス this を使用する（無効化）
+dotnet_diagnostic.SA1101.severity = none
+
+# SA1200: using ディレクティブは名前空間内に配置する（.editorconfigと重複するため無効化）
+dotnet_diagnostic.SA1200.severity = none
+
+# SA1309: フィールド名はアンダースコアで始まらない（プロジェクトの命名規則に従うため無効化）
+dotnet_diagnostic.SA1309.severity = none
+
+# SA1413: 末尾のカンマを使用する（オプション）
+dotnet_diagnostic.SA1413.severity = suggestion
+
+# SA1600: 要素にドキュメントを付ける（段階的に対応するため警告レベル）
+dotnet_diagnostic.SA1600.severity = suggestion
+
+# SA1601: 部分要素にドキュメントを付ける（段階的に対応するため警告レベル）
+dotnet_diagnostic.SA1601.severity = suggestion
+
+# SA1602: 列挙項目にドキュメントを付ける（段階的に対応するため警告レベル）
+dotnet_diagnostic.SA1602.severity = suggestion
+
+# SA0001: XMLコメントの解析エラー（CS1591と重複するため無効化）
+dotnet_diagnostic.SA0001.severity = none
+
+# CA1303: ローカライズされたパラメーターとして文字列を渡さない（日本語プロジェクトのため無効化）
+dotnet_diagnostic.CA1303.severity = none
+
+# CA1848: LoggerMessage デリゲートを使用する（パフォーマンス最適化は後で対応）
+dotnet_diagnostic.CA1848.severity = suggestion
+
+# CA2007: ConfigureAwait を呼び出すことを検討する（ASP.NET Coreでは不要）
+dotnet_diagnostic.CA2007.severity = none
+
+# IDE0058: 式の値が使用されていない（FluentValidation等で頻出するため抑制）
+dotnet_diagnostic.IDE0058.severity = silent
+
+# IDE0290: プライマリコンストラクターを使用する（段階的に対応）
+dotnet_diagnostic.IDE0290.severity = suggestion
+

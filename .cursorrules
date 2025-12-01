@@ -13,7 +13,7 @@
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: ✅ FluentValidation（実装完了: 2025-12-01）
 - **メディエーター**: 未導入（MediatR導入予定）
-- **静的解析**: 未導入（Roslyn Analyzers、StyleCop、SonarAnalyzer導入予定）
+- **静的解析**: ✅ Roslyn Analyzers、StyleCop、SonarAnalyzer、Roslynator（実装完了: 2025-12-01）
 
 ## 開発方針
 
@@ -224,9 +224,11 @@ img-resizer/
   - 実装完了、ビルド成功、アプリケーション正常起動確認済み
 - ✅ **フェーズ1-3: FluentValidation導入** (2025-12-01)
   - 実装完了、ビルド成功、アプリケーション正常起動確認済み
+- ✅ **フェーズ1-4: 静的解析ツール導入** (2025-12-01)
+  - 実装完了、ビルド成功確認済み
 
-### 次のステップ（フェーズ1残タスク）
-- 静的解析ツール導入
+### 次のステップ（フェーズ2）
+- MediatR + CQRS実装
 
 ### リファクタリング方針
 - モダンな設計への移行は段階的に実施
