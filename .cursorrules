@@ -9,7 +9,7 @@
 - **フレームワーク**: ASP.NET Core WebAPI
 - **アーキテクチャ**: クリーンアーキテクチャ + CQRS（段階的に導入中）
 - **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
-- **エラーハンドリング**: ✅ Resultパターン（実装完了: 2025-12-01）
+- **エラーハンドリング**: ✅ Resultパターン + グローバル例外ハンドラー（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: 実装中（FluentValidation導入予定）
 - **メディエーター**: 未導入（MediatR導入予定）
@@ -28,6 +28,7 @@
   - Presentation層: Application層とInfrastructure層に依存
 - インターフェースによる依存関係の逆転を徹底する
 - ✅ **Resultパターンを使用**（例外駆動からResult駆動へ）**実装完了: 2025-12-01**
+- ✅ **グローバル例外ハンドラーを使用**（予期しない例外の一元管理）**実装完了: 2025-12-01**
 
 ### コーディング規約
 - C# のコーディング規約に従う（.editorconfigで強制予定）
@@ -134,8 +135,11 @@ img-resizer/
   - Domain層に`Result`クラスと`Result<T>`クラスを実装
   - Infrastructure層、Application層、Presentation層で全面的に採用
   - Controllerのコード量を約50%削減（115行→55行）
+- ✅ **グローバル例外ハンドラーで一元管理** **実装完了: 2025-12-01**
+  - `GlobalExceptionHandlerMiddleware`による予期しない例外の一元処理
+  - すべてのドメイン例外を適切なHTTPステータスコードにマッピング
+  - 開発環境と本番環境で異なるエラーメッセージ詳細度
 - カスタム例外クラスは例外的な状況でのみ使用
-- グローバル例外ハンドラーで一元管理（導入予定）
 - ✅ エラーコードを定義（エラーハンドリング仕様書参照）
 - ✅ 適切なHTTPステータスコードを返却
 - エラーログを記録（構造化ログへ移行予定）
@@ -190,9 +194,11 @@ img-resizer/
 - ✅ **Resultパターン** (2025-12-01): 例外駆動からResult駆動へ
   - `ImgResizer.Domain.Common.Result`および`Result<T>`を実装
   - 全レイヤーで採用完了
+- ✅ **グローバル例外ハンドラー** (2025-12-01): 予期しない例外の一元管理
+  - `GlobalExceptionHandlerMiddleware`による一元処理
+  - エラーレスポンスの統一とHTTPステータスコードの自動マッピング
 
 ### 導入予定（優先度: 高）
-- **グローバル例外ハンドラー**: Controllerの重複コード削減
 - **FluentValidation**: バリデーションロジックの分離
 - **MediatR + CQRS**: Command/Queryの明確な分離
 - **静的解析ツール**: .editorconfig、StyleCop、SonarAnalyzer
@@ -211,9 +217,10 @@ img-resizer/
 ### 実施済み
 - ✅ **フェーズ1-1: Resultパターン導入** (2025-12-01)
   - 実装完了、ビルド成功、アプリケーション正常稼働確認済み
+- ✅ **フェーズ1-2: グローバル例外ハンドラー実装** (2025-12-01)
+  - 実装完了、ビルド成功、アプリケーション正常起動確認済み
 
 ### 次のステップ（フェーズ1残タスク）
-- グローバル例外ハンドラーの実装
 - FluentValidation導入
 - 静的解析ツール導入
 

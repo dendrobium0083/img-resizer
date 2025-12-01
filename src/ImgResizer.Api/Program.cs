@@ -1,3 +1,4 @@
+using ImgResizer.Api.Middleware;
 using ImgResizer.Application.UseCases;
 using ImgResizer.Domain.Interfaces;
 using ImgResizer.Infrastructure.Configuration;
@@ -23,6 +24,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// グローバル例外ハンドラー（最初に登録）
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 // ミドルウェアの設定
 if (app.Environment.IsDevelopment())

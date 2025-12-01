@@ -13,7 +13,7 @@
 - **アーキテクチャ**: クリーンアーキテクチャ + CQRS
 - **API**: ASP.NET Core WebAPI
 - **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
-- **エラーハンドリング**: Resultパターン（例外駆動から脱却）✅
+- **エラーハンドリング**: Resultパターン + グローバル例外ハンドラー ✅（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: 実装中（FluentValidation導入予定）
 - **メディエーター**: 未導入（MediatR導入予定）
@@ -203,7 +203,7 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
   - Serilogによるロギング
 - **Presentation層**: WebAPIコントローラー（Application層とInfrastructure層に依存）
   - RESTful API
-  - グローバル例外ハンドラー
+  - グローバル例外ハンドラー（実装済み）
   - Swagger/OpenAPI
 
 ### モダンな設計パターン
@@ -270,9 +270,9 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 
 ### 優先度: 高
 - ✅ **Resultパターンの導入**（**完了: 2025-12-01**）
-- 📋 グローバル例外ハンドラーの実装（計画中）
-- 📋 MediatR + CQRS実装（計画中）
-- 📋 FluentValidation導入（計画中）
+- ✅ **グローバル例外ハンドラーの実装**（**完了: 2025-12-01**）
+- 📋 MediatR + CQRS実装（次のステップ）
+- 📋 FluentValidation導入（次のステップ）
 
 ### 優先度: 中
 - 🔄 ImageSharpへの移行（System.Drawing.Commonから）
