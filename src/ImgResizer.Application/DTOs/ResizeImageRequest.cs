@@ -6,6 +6,6 @@ namespace ImgResizer.Application.DTOs;
 public class ResizeImageRequest
 {
     public string FilePath { get; set; } = string.Empty;
+
     public string? ResizeMode { get; set; }
 }
-

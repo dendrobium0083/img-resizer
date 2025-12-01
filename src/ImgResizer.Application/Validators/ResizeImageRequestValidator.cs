@@ -73,4 +73,3 @@ public class ResizeImageRequestValidator : AbstractValidator<ResizeImageRequest>
         return fileInfo.Length <= _settings.Value.MaxFileSize;
     }
 }
-

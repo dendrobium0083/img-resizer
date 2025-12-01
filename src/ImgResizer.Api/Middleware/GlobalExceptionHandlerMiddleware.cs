@@ -31,7 +31,9 @@ public class GlobalExceptionHandlerMiddleware
         {
             await _next(context);
         }
+#pragma warning disable CA1031 // Do not catch general exception types - グローバル例外ハンドラーでは必要
         catch (Exception ex)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             _logger.LogError(ex, "予期しないエラーが発生しました");
             await HandleExceptionAsync(context, ex);
@@ -109,4 +111,3 @@ public class GlobalExceptionHandlerMiddleware
         };
     }
 }
-

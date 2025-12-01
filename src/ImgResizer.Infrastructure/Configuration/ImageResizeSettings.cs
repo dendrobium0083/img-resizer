@@ -6,11 +6,17 @@ namespace ImgResizer.Infrastructure.Configuration;
 public class ImageResizeSettings
 {
     public string InputDirectory { get; set; } = string.Empty;
+
     public string OutputDirectory { get; set; } = string.Empty;
+
     public TargetSizeSettings TargetSize { get; set; } = new();
+
     public string[] AllowedExtensions { get; set; } = Array.Empty<string>();
+
     public long MaxFileSize { get; set; } = 52428800; // 50MB
+
     public PaddingColorSettings? PaddingColor { get; set; }
+
     public ImageQualitySettings? ImageQuality { get; set; }
 }
 
@@ -20,6 +26,7 @@ public class ImageResizeSettings
 public class TargetSizeSettings
 {
     public int Width { get; set; } = 512;
+
     public int Height { get; set; } = 512;
 }
 
@@ -29,8 +36,11 @@ public class TargetSizeSettings
 public class PaddingColorSettings
 {
     public int R { get; set; } = 0;
+
     public int G { get; set; } = 0;
+
     public int B { get; set; } = 0;
+
     public int A { get; set; } = 255;
 }
 
@@ -40,6 +50,6 @@ public class PaddingColorSettings
 public class ImageQualitySettings
 {
     public int JpegQuality { get; set; } = 90;
+
     public int PngCompressionLevel { get; set; } = 6;
 }
-
