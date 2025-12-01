@@ -73,5 +73,6 @@ Desktop.ini
 ## ビルドログ
 build-output.txt
 build-warnings.txt
+build-result.txt
 build.log
 *.log
