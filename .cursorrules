@@ -128,11 +128,17 @@ img-resizer/
 - 入力値のバリデーションを徹底
 
 ## テスト
-- 単体テストを各レイヤーで実装
+- ✅ **単体テストを各レイヤーで実装** **実装完了: 2025-12-02**
+  - Domain層: 4テスト（Resultクラス）
+  - Application層: 28テスト（CommandHandler、Validator、Behavior）
+  - Infrastructure層: 21テスト（Repository、Service）
+- ✅ **統合テストでAPIエンドポイントを検証** **実装完了: 2025-12-02**
+  - Api層: 9テスト（ImageController）
+- ✅ **総テスト数: 62テスト、すべて成功（0失敗）** **実装完了: 2025-12-02**
 - モックを使用してレイヤー間の依存を分離
-- 統合テストでAPIエンドポイントを検証
 - テストカバレッジを維持（目標: 80%以上）
 - FluentAssertionsを使用した読みやすいアサーション
+- xUnit、Moq、Microsoft.AspNetCore.Mvc.Testingを使用
 
 ## エラーハンドリング
 - ✅ **Resultパターンを使用**（正常系と異常系の明示的な分離）**実装完了: 2025-12-01**
@@ -253,10 +259,23 @@ img-resizer/
 
 **フェーズ2完全完了！🎉**
 
-### 次のステップ（フェーズ3）
+### フェーズ3: 実施済み
+- ✅ **フェーズ3: テストコード実装** (2025-12-02)
+  - Domain層: 4テスト（Resultクラス）
+  - Application層: 28テスト（CommandHandler、Validator、Behavior）
+  - Infrastructure層: 21テスト（Repository、Service）
+  - Api層: 9テスト（ImageController統合テスト）
+  - 総テスト数: 62テスト、すべて成功（0失敗）
+  - テストプロジェクト構成完了
+  - xUnit、FluentAssertions、Moq、Microsoft.AspNetCore.Mvc.Testingを使用
+
+**フェーズ3完全完了！🎉**
+
+### 次のステップ（フェーズ4）
 - ImageSharp導入
 - Serilog導入
 - 設定クラスの強化
+- テストカバレッジの測定とレポート生成
 
 ### リファクタリング方針
 - モダンな設計への移行は段階的に実施

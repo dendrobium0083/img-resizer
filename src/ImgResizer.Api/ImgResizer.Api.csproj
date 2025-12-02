@@ -16,4 +16,8 @@
     <ProjectReference Include="..\ImgResizer.Infrastructure\ImgResizer.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ImgResizer.Api.Tests" />
+  </ItemGroup>
+
 </Project>
