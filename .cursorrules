@@ -8,7 +8,7 @@
 - **言語**: C# (.NET 8.0)
 - **フレームワーク**: ASP.NET Core WebAPI
 - **アーキテクチャ**: クリーンアーキテクチャ + CQRS
-- **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
+- **画像処理**: ✅ SixLabors.ImageSharp（実装完了: 2025-12-02）
 - **エラーハンドリング**: ✅ Resultパターン + グローバル例外ハンドラー（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: ✅ FluentValidation（実装完了: 2025-12-01）
@@ -101,8 +101,9 @@ img-resizer/
 5. ✅ **FluentValidationでバリデーションを実装する** **実装済み**
 6. ✅ **XMLドキュメントコメントを記述する**（すべてのpublicメンバー）**実装済み**
 7. ✅ **MediatRを使用してCommand/Queryを実装する** **実装済み**
-8. 構造化ログを実装する（Serilog導入予定）
-9. ✅ **静的解析ツールの警告に対応する**（警告0個を維持）**実装済み**
+8. ✅ **ImageSharpを使用して画像処理を実装する** **実装済み**
+9. 構造化ログを実装する（Serilog導入予定）
+10. ✅ **静的解析ツールの警告に対応する**（警告0個を維持）**実装済み**
 
 ### 禁止事項
 1. レイヤー間の直接的な依存関係を作らない
@@ -111,15 +112,19 @@ img-resizer/
 4. ハードコードされた値を使用しない（設定ファイルから読み込む）
 5. ✅ **正常系フローで例外を使わない**（Resultパターンを使用）**実装済み**
 6. ✅ **バリデーションロジックをUseCaseに直接書かない**（FluentValidation使用）**実装済み**
+7. ✅ **System.Drawing.Commonを使用しない**（ImageSharpを使用）**実装済み**
 
 ### 画像処理の実装
-- 現在: System.Drawing.Common（Windows専用）
-- 移行予定: SixLabors.ImageSharp（クロスプラットフォーム対応）
+- ✅ **現在: SixLabors.ImageSharp（クロスプラットフォーム対応）** **実装完了: 2025-12-02**
 - アスペクト比を維持したリサイズ
-- 高品質なリサンプリングアルゴリズムを使用
+- 高品質なリサンプリングアルゴリズム（Lanczos3）を使用
 - メモリリークを防ぐため、`using` ステートメントでリソースを適切に解放
 - 非同期I/O操作を使用
 - ✅ CancellationTokenを適切に使用（MediatRで対応済み）
+- `Image.Load()`で画像を読み込み
+- `CloneAs<Rgba32>()`で画像をクローン
+- `Mutate()`で画像処理を実行
+- `JpegEncoder`、`PngEncoder`などでエンコード
 
 ### セキュリティ
 - パストラバーサル攻撃を防止
@@ -221,9 +226,13 @@ img-resizer/
   - `ResizeImageCommand`と`ResizeImageCommandHandler`を実装
   - `ValidationBehavior`によるパイプラインバリデーション
   - CancellationTokenの一貫した使用
+- ✅ **ImageSharp** (2025-12-02): System.Drawing.Commonからの移行完了
+  - `ImageResizeService.cs`をImageSharp APIに書き換え
+  - テストコードをImageSharpに書き換え
+  - クロスプラットフォーム対応完了
+  - ビルド成功、全テスト成功（62テスト、0失敗）
 
 ### 導入予定（優先度: 中）
-- **ImageSharp**: System.Drawing.Commonからの移行
 - **Serilog**: 構造化ログの強化
 - **設定クラスの強化**: IValidateOptions<T>による検証
 
@@ -271,8 +280,17 @@ img-resizer/
 
 **フェーズ3完全完了！🎉**
 
-### 次のステップ（フェーズ4）
-- ImageSharp導入
+### フェーズ4: 実施済み
+- ✅ **フェーズ4: ImageSharp導入** (2025-12-02)
+  - `System.Drawing.Common`を削除
+  - `SixLabors.ImageSharp` 3.1.6を追加
+  - `ImageResizeService.cs`をImageSharp APIに書き換え
+  - テストコードをImageSharpに書き換え
+  - ビルド成功、全テスト成功（62テスト、0失敗）
+
+**フェーズ4完全完了！🎉**
+
+### 次のステップ（フェーズ5）
 - Serilog導入
 - 設定クラスの強化
 - テストカバレッジの測定とレポート生成

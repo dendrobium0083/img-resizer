@@ -12,11 +12,11 @@
 - **言語**: C#
 - **アーキテクチャ**: クリーンアーキテクチャ + CQRS
 - **API**: ASP.NET Core WebAPI
-- **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
+- **画像処理**: SixLabors.ImageSharp ✅（実装完了: 2025-12-02）
 - **エラーハンドリング**: Resultパターン + グローバル例外ハンドラー ✅（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: FluentValidation ✅（実装完了: 2025-12-01）
-- **メディエーター**: 未導入（MediatR導入予定）
+- **メディエーター**: MediatR ✅（実装完了: 2025-12-02）
 - **静的解析**: ✅ Roslyn Analyzers、StyleCop、SonarAnalyzer、Roslynator（実装完了: 2025-12-01、警告0個）
 - **ドキュメント**: ✅ XMLドキュメントコメント（実装完了: 2025-12-01）
 
@@ -285,11 +285,11 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 - ✅ **静的解析の全警告修正**（**完了: 2025-12-01**）- 警告数: 237個 → 0個
 - ✅ **XMLドキュメントコメント追加**（**完了: 2025-12-01**）
 
-### フェーズ2: アーキテクチャ改善（次のステップ）
-- 📋 MediatR + CQRS実装
+### フェーズ2: アーキテクチャ改善（✅ 完全完了: 2025-12-02）
+- ✅ **MediatR + CQRS実装**（**完了: 2025-12-02**）
 
-### 優先度: 中
-- 🔄 ImageSharpへの移行（System.Drawing.Commonから）
+### フェーズ3: ライブラリ移行（✅ 完全完了: 2025-12-02）
+- ✅ **ImageSharp導入**（**完了: 2025-12-02**）- System.Drawing.Commonから移行完了
 - 🔄 Serilog導入（構造化ログ）
 - 🔄 静的解析ツール強化
 

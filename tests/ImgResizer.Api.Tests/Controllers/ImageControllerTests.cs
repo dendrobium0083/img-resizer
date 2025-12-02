@@ -1,12 +1,14 @@
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using FluentAssertions;
 using ImgResizer.Api.Tests;
 using ImgResizer.Application.DTOs;
 using Microsoft.AspNetCore.Mvc.Testing;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Processing;
 
 namespace ImgResizer.Api.Tests.Controllers;
 
@@ -57,19 +59,34 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     /// <param name="fileName">ファイル名。</param>
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
-    /// <param name="format">画像形式。</param>
+    /// <param name="encoder">画像エンコーダー。</param>
     /// <returns>作成されたファイルのパス。</returns>
-    private string CreateTestImageFile(string fileName, int width, int height, ImageFormat format)
+    private string CreateTestImageFile(string fileName, int width, int height, IImageEncoder encoder)
     {
         var filePath = Path.Combine(_testInputDirectory, fileName);
-        using var bitmap = new Bitmap(width, height);
-        using (var graphics = Graphics.FromImage(bitmap))
+        using var image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(width, height);
+        
+        // 背景を赤に設定
+        image.Mutate(ctx => ctx.BackgroundColor(SixLabors.ImageSharp.Color.Red));
+
+        // 中央に青い円を描画（簡易版：中央付近のピクセルを青に設定）
+        var centerX = width / 2;
+        var centerY = height / 2;
+        var radius = Math.Min(width, height) / 4;
+        for (int x = Math.Max(0, centerX - radius); x < Math.Min(width, centerX + radius); x++)
         {
-            graphics.Clear(Color.Red);
-            graphics.FillEllipse(Brushes.Blue, 10, 10, width - 20, height - 20);
+            for (int y = Math.Max(0, centerY - radius); y < Math.Min(height, centerY + radius); y++)
+            {
+                var dx = x - centerX;
+                var dy = y - centerY;
+                if (dx * dx + dy * dy <= radius * radius)
+                {
+                    image[x, y] = SixLabors.ImageSharp.Color.Blue;
+                }
+            }
         }
 
-        bitmap.Save(filePath, format);
+        image.Save(filePath, encoder);
         return filePath;
     }
 
@@ -77,7 +94,7 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task ResizeImage_ValidRequest_Returns200Ok()
     {
         // Arrange
-        var testImagePath = CreateTestImageFile("test.jpg", 800, 600, ImageFormat.Jpeg);
+        var testImagePath = CreateTestImageFile("test.jpg", 800, 600, new JpegEncoder());
         var request = new ResizeImageRequest
         {
             FilePath = testImagePath,
@@ -193,7 +210,7 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task ResizeImage_WithCropMode_Returns200Ok()
     {
         // Arrange
-        var testImagePath = CreateTestImageFile("test-crop.jpg", 1920, 1080, ImageFormat.Jpeg);
+        var testImagePath = CreateTestImageFile("test-crop.jpg", 1920, 1080, new JpegEncoder());
         var request = new ResizeImageRequest
         {
             FilePath = testImagePath,
@@ -215,7 +232,7 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task ResizeImage_WithoutResizeMode_UsesDefaultFit()
     {
         // Arrange
-        var testImagePath = CreateTestImageFile("test-default.jpg", 800, 600, ImageFormat.Jpeg);
+        var testImagePath = CreateTestImageFile("test-default.jpg", 800, 600, new JpegEncoder());
         var request = new ResizeImageRequest
         {
             FilePath = testImagePath,
@@ -237,7 +254,7 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task ResizeImage_WithPngFormat_Returns200Ok()
     {
         // Arrange
-        var testImagePath = CreateTestImageFile("test.png", 400, 300, ImageFormat.Png);
+        var testImagePath = CreateTestImageFile("test.png", 400, 300, new PngEncoder());
         var request = new ResizeImageRequest
         {
             FilePath = testImagePath,
@@ -258,7 +275,7 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task ResizeImage_InvalidResizeMode_Returns400BadRequest()
     {
         // Arrange
-        var testImagePath = CreateTestImageFile("test.jpg", 800, 600, ImageFormat.Jpeg);
+        var testImagePath = CreateTestImageFile("test.jpg", 800, 600, new JpegEncoder());
         var request = new ResizeImageRequest
         {
             FilePath = testImagePath,
@@ -276,4 +293,3 @@ public class ImageControllerTests : IClassFixture<CustomWebApplicationFactory>, 
         result.ErrorCode.Should().Be("VALIDATION_ERROR");
     }
 }
-

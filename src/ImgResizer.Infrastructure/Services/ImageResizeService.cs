@@ -1,10 +1,15 @@
-using System.Drawing;
-using System.Drawing.Imaging;
 using ImgResizer.Domain.Common;
 using ImgResizer.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ImgResizer.Infrastructure.Configuration;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Bmp;
+using SixLabors.ImageSharp.Formats.Gif;
 
 namespace ImgResizer.Infrastructure.Services;
 
@@ -45,17 +50,16 @@ public class ImageResizeService : IImageResizeService
             {
                 _logger.LogDebug("画像リサイズ処理開始: Size={Size}, Mode={ResizeMode}", size, resizeMode);
 
-                using var originalImageStream = new MemoryStream(imageData);
-                using var originalImage = new Bitmap(originalImageStream);
+                using var image = Image.Load(imageData);
 
                 byte[] result;
                 if (resizeMode == "crop")
                 {
-                    result = ResizeWithCrop(originalImage, size, extension);
+                    result = ResizeWithCrop(image, size, extension);
                 }
                 else
                 {
-                    result = ResizeWithFit(originalImage, size, extension);
+                    result = ResizeWithFit(image, size, extension);
                 }
 
                 _logger.LogDebug("画像リサイズ処理完了: Size={Size}, Mode={ResizeMode}, ResultSize={ResultSize} bytes", 
@@ -63,7 +67,7 @@ public class ImageResizeService : IImageResizeService
                 
                 return Result.Success(result);
             }
-            catch (ArgumentException ex)
+            catch (UnknownImageFormatException ex)
             {
                 _logger.LogError(ex, "無効な画像データ: Mode={ResizeMode}", resizeMode);
                 return Result.Failure<byte[]>(
@@ -102,14 +106,14 @@ public class ImageResizeService : IImageResizeService
     /// <summary>
     /// 全体変換方式（fit）: アスペクト比を維持したリサイズとパディング
     /// </summary>
-    private byte[] ResizeWithFit(Bitmap originalImage, int size, string extension)
+    private byte[] ResizeWithFit(Image image, int size, string extension)
     {
         // アスペクト比を計算
-        double aspectRatio = (double)originalImage.Width / originalImage.Height;
+        double aspectRatio = (double)image.Width / image.Height;
 
         // リサイズサイズの決定
         int newWidth, newHeight;
-        if (originalImage.Width > originalImage.Height)
+        if (image.Width > image.Height)
         {
             newWidth = size;
             newHeight = (int)(size / aspectRatio);
@@ -120,30 +124,26 @@ public class ImageResizeService : IImageResizeService
             newWidth = (int)(size * aspectRatio);
         }
 
-        // リサイズ処理
-        using var resizedImage = new Bitmap(newWidth, newHeight);
-        using (var graphics = Graphics.FromImage(resizedImage))
+        // リサイズ処理（クローンを作成して処理）
+        using var resizedImage = image.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>();
+        resizedImage.Mutate(x => x.Resize(new ResizeOptions
         {
-            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
-        }
+            Size = new Size(newWidth, newHeight),
+            Mode = ResizeMode.Max,
+            Sampler = KnownResamplers.Lanczos3
+        }));
 
         // 正方形キャンバスの作成
-        using var squareCanvas = new Bitmap(size, size);
-        using (var graphics = Graphics.FromImage(squareCanvas))
-        {
-            // パディング色で塗りつぶし
-            var paddingColor = GetPaddingColor();
-            graphics.Clear(paddingColor);
+        using var squareCanvas = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(size, size);
+        
+        // パディング色で塗りつぶし
+        var paddingColor = GetPaddingColor();
+        squareCanvas.Mutate(x => x.BackgroundColor(paddingColor));
 
-            // 中央配置
-            int x = (size - newWidth) / 2;
-            int y = (size - newHeight) / 2;
-            graphics.DrawImage(resizedImage, x, y, newWidth, newHeight);
-        }
+        // 中央配置
+        int x = (size - newWidth) / 2;
+        int y = (size - newHeight) / 2;
+        squareCanvas.Mutate(ctx => ctx.DrawImage(resizedImage, new Point(x, y), 1f));
 
         // 画像データの変換
         return ConvertToByteArray(squareCanvas, extension);
@@ -152,109 +152,88 @@ public class ImageResizeService : IImageResizeService
     /// <summary>
     /// 中央クロップ方式（crop）: 画像の中央部分を切り出してリサイズ
     /// </summary>
-    private byte[] ResizeWithCrop(Bitmap originalImage, int size, string extension)
+    private byte[] ResizeWithCrop(Image image, int size, string extension)
     {
-        // 元画像が512×512より小さい場合は、そのまま拡大
-        if (originalImage.Width < size || originalImage.Height < size)
+        // 元画像が指定サイズより小さい場合は、そのまま拡大
+        if (image.Width < size || image.Height < size)
         {
-            using var resizedImage = new Bitmap(size, size);
-            using (var graphics = Graphics.FromImage(resizedImage))
+            using var resizedImage = image.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>();
+            resizedImage.Mutate(x => x.Resize(new ResizeOptions
             {
-                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                graphics.DrawImage(originalImage, 0, 0, size, size);
-            }
+                Size = new Size(size, size),
+                Mode = ResizeMode.Stretch,
+                Sampler = KnownResamplers.Lanczos3
+            }));
             return ConvertToByteArray(resizedImage, extension);
         }
 
         // クロップサイズの決定
-        int cropSize = Math.Min(originalImage.Width, originalImage.Height);
+        int cropSize = Math.Min(image.Width, image.Height);
 
         // 中央位置の計算
-        int x = (originalImage.Width - cropSize) / 2;
-        int y = (originalImage.Height - cropSize) / 2;
+        int x = (image.Width - cropSize) / 2;
+        int y = (image.Height - cropSize) / 2;
 
-        // 中央部分の切り出し
-        var cropRect = new Rectangle(x, y, cropSize, cropSize);
-        using var croppedImage = originalImage.Clone(cropRect, originalImage.PixelFormat);
+        // 中央部分の切り出しとリサイズ（クローンを作成して処理）
+        using var croppedImage = image.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>();
+        croppedImage.Mutate(ctx => ctx
+            .Crop(new Rectangle(x, y, cropSize, cropSize))
+            .Resize(new ResizeOptions
+            {
+                Size = new Size(size, size),
+                Mode = ResizeMode.Stretch,
+                Sampler = KnownResamplers.Lanczos3
+            }));
 
-        // リサイズ処理
-        using var finalImage = new Bitmap(size, size);
-        using (var graphics = Graphics.FromImage(finalImage))
-        {
-            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            graphics.DrawImage(croppedImage, 0, 0, size, size);
-        }
-
-        return ConvertToByteArray(finalImage, extension);
+        return ConvertToByteArray(croppedImage, extension);
     }
 
     /// <summary>
     /// パディング色を取得
     /// </summary>
-    private Color GetPaddingColor()
+    private SixLabors.ImageSharp.Color GetPaddingColor()
     {
         var paddingColorSettings = _settings.Value.PaddingColor;
         if (paddingColorSettings != null)
         {
-            return Color.FromArgb(
-                paddingColorSettings.A,
-                paddingColorSettings.R,
-                paddingColorSettings.G,
-                paddingColorSettings.B);
+            return SixLabors.ImageSharp.Color.FromRgba(
+                (byte)paddingColorSettings.R,
+                (byte)paddingColorSettings.G,
+                (byte)paddingColorSettings.B,
+                (byte)paddingColorSettings.A);
         }
-        return Color.Black;
+        return SixLabors.ImageSharp.Color.Black;
     }
 
     /// <summary>
     /// 画像をバイト配列に変換
     /// </summary>
-    private byte[] ConvertToByteArray(Bitmap image, string extension)
+    private byte[] ConvertToByteArray(Image image, string extension)
     {
         using var memoryStream = new MemoryStream();
-        var imageFormat = GetImageFormat(extension);
-        
-        // JPEG品質設定
-        if (imageFormat == ImageFormat.Jpeg && _settings.Value.ImageQuality != null)
-        {
-            var encoderParameters = new EncoderParameters(1);
-            encoderParameters.Param[0] = new EncoderParameter(
-                System.Drawing.Imaging.Encoder.Quality, 
-                (long)_settings.Value.ImageQuality.JpegQuality);
-            
-            var jpegCodec = ImageCodecInfo.GetImageEncoders()
-                .FirstOrDefault(c => c.FormatID == ImageFormat.Jpeg.Guid);
-            
-            if (jpegCodec != null)
-            {
-                image.Save(memoryStream, jpegCodec, encoderParameters);
-                encoderParameters.Dispose();
-                return memoryStream.ToArray();
-            }
-        }
-
-        image.Save(memoryStream, imageFormat);
+        IImageEncoder encoder = GetImageEncoder(extension);
+        image.Save(memoryStream, encoder);
         return memoryStream.ToArray();
     }
 
     /// <summary>
-    /// 拡張子からImageFormatを取得
+    /// 拡張子からIImageEncoderを取得
     /// </summary>
-    private ImageFormat GetImageFormat(string extension)
+    private IImageEncoder GetImageEncoder(string extension)
     {
         return extension.ToLower() switch
         {
-            ".jpg" or ".jpeg" => ImageFormat.Jpeg,
-            ".png" => ImageFormat.Png,
-            ".gif" => ImageFormat.Gif,
-            ".bmp" => ImageFormat.Bmp,
-            _ => ImageFormat.Png
+            ".jpg" or ".jpeg" => new JpegEncoder
+            {
+                Quality = _settings.Value.ImageQuality?.JpegQuality ?? 90
+            },
+            ".png" => new PngEncoder
+            {
+                CompressionLevel = (PngCompressionLevel)(_settings.Value.ImageQuality?.PngCompressionLevel ?? 6)
+            },
+            ".gif" => new GifEncoder(),
+            ".bmp" => new BmpEncoder(),
+            _ => new PngEncoder()
         };
     }
 }
-

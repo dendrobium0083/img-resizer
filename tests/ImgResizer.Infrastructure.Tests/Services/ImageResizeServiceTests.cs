@@ -1,5 +1,3 @@
-using System.Drawing;
-using System.Drawing.Imaging;
 using FluentAssertions;
 using ImgResizer.Domain.Common;
 using ImgResizer.Infrastructure.Configuration;
@@ -7,6 +5,12 @@ using ImgResizer.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Bmp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Processing;
 
 namespace ImgResizer.Infrastructure.Tests.Services;
 
@@ -54,19 +58,34 @@ public class ImageResizeServiceTests : IDisposable
     /// </summary>
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
-    /// <param name="format">画像形式。</param>
+    /// <param name="encoder">画像エンコーダー。</param>
     /// <returns>画像データ（バイト配列）。</returns>
-    private byte[] CreateTestImage(int width, int height, ImageFormat format)
+    private byte[] CreateTestImage(int width, int height, IImageEncoder encoder)
     {
-        using var bitmap = new Bitmap(width, height);
-        using (var graphics = Graphics.FromImage(bitmap))
+        using var image = new Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(width, height);
+        
+        // 背景を赤に設定
+        image.Mutate(ctx => ctx.BackgroundColor(SixLabors.ImageSharp.Color.Red));
+
+        // 中央に青い円を描画（簡易版：中央付近のピクセルを青に設定）
+        var centerX = width / 2;
+        var centerY = height / 2;
+        var radius = Math.Min(width, height) / 4;
+        for (int x = Math.Max(0, centerX - radius); x < Math.Min(width, centerX + radius); x++)
         {
-            graphics.Clear(Color.Red);
-            graphics.FillEllipse(Brushes.Blue, 10, 10, width - 20, height - 20);
+            for (int y = Math.Max(0, centerY - radius); y < Math.Min(height, centerY + radius); y++)
+            {
+                var dx = x - centerX;
+                var dy = y - centerY;
+                if (dx * dx + dy * dy <= radius * radius)
+                {
+                    image[x, y] = SixLabors.ImageSharp.Color.Blue;
+                }
+            }
         }
 
         using var stream = new MemoryStream();
-        bitmap.Save(stream, format);
+        image.Save(stream, encoder);
         return stream.ToArray();
     }
 
@@ -74,7 +93,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_ValidImage_WithFitMode_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(800, 600, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(800, 600, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "fit";
         const string extension = ".jpg";
@@ -92,7 +111,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_ValidImage_WithCropMode_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(800, 600, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(800, 600, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "crop";
         const string extension = ".jpg";
@@ -110,7 +129,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_OutputSize_Is512x512()
     {
         // Arrange
-        var originalImageData = CreateTestImage(800, 600, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(800, 600, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "fit";
         const string extension = ".jpg";
@@ -122,8 +141,7 @@ public class ImageResizeServiceTests : IDisposable
         result.IsSuccess.Should().BeTrue();
 
         // 出力画像のサイズを確認
-        using var outputStream = new MemoryStream(result.Value);
-        using var outputImage = new Bitmap(outputStream);
+        using var outputImage = Image.Load(result.Value);
         outputImage.Width.Should().Be(512);
         outputImage.Height.Should().Be(512);
     }
@@ -132,7 +150,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_WithPngFormat_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(400, 300, ImageFormat.Png);
+        var originalImageData = CreateTestImage(400, 300, new PngEncoder());
         const int targetSize = 512;
         const string resizeMode = "fit";
         const string extension = ".png";
@@ -167,7 +185,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_SquareImage_WithFitMode_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(512, 512, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(512, 512, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "fit";
         const string extension = ".jpg";
@@ -184,7 +202,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_VerticalImage_WithFitMode_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(300, 800, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(300, 800, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "fit";
         const string extension = ".jpg";
@@ -196,8 +214,7 @@ public class ImageResizeServiceTests : IDisposable
         result.IsSuccess.Should().BeTrue();
 
         // 出力画像のサイズを確認
-        using var outputStream = new MemoryStream(result.Value);
-        using var outputImage = new Bitmap(outputStream);
+        using var outputImage = Image.Load(result.Value);
         outputImage.Width.Should().Be(512);
         outputImage.Height.Should().Be(512);
     }
@@ -206,7 +223,7 @@ public class ImageResizeServiceTests : IDisposable
     public async Task ResizeToSquareAsync_HorizontalImage_WithCropMode_ReturnsSuccess()
     {
         // Arrange
-        var originalImageData = CreateTestImage(1920, 1080, ImageFormat.Jpeg);
+        var originalImageData = CreateTestImage(1920, 1080, new JpegEncoder());
         const int targetSize = 512;
         const string resizeMode = "crop";
         const string extension = ".jpg";
@@ -218,8 +235,7 @@ public class ImageResizeServiceTests : IDisposable
         result.IsSuccess.Should().BeTrue();
 
         // 出力画像のサイズを確認
-        using var outputStream = new MemoryStream(result.Value);
-        using var outputImage = new Bitmap(outputStream);
+        using var outputImage = Image.Load(result.Value);
         outputImage.Width.Should().Be(512);
         outputImage.Height.Should().Be(512);
     }
@@ -276,4 +292,3 @@ public class ImageResizeServiceTests : IDisposable
         result.Should().BeFalse();
     }
 }
-
