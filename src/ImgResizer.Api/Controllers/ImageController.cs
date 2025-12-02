@@ -1,47 +1,52 @@
+using ImgResizer.Application.Commands;
 using ImgResizer.Application.DTOs;
-using ImgResizer.Application.UseCases;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ImgResizer.Api.Controllers;
 
 /// <summary>
 /// 画像変換APIコントローラー。
+/// MediatRを使用してCQRSパターンでリクエストを処理します。
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ImageController : ControllerBase
 {
-    private readonly ResizeImageUseCase _resizeImageUseCase;
+    private readonly IMediator _mediator;
     private readonly ILogger<ImageController> _logger;
 
     /// <summary>
-    /// コンストラクタ
+    /// Initializes a new instance of the <see cref="ImageController"/> class.
     /// </summary>
-    /// <param name="resizeImageUseCase">画像リサイズユースケース</param>
-    /// <param name="logger">ロガー</param>
+    /// <param name="mediator">MediatRメディエーター。</param>
+    /// <param name="logger">ロガー。</param>
     public ImageController(
-        ResizeImageUseCase resizeImageUseCase,
+        IMediator mediator,
         ILogger<ImageController> logger)
     {
-        _resizeImageUseCase = resizeImageUseCase;
+        _mediator = mediator;
         _logger = logger;
     }
 
     /// <summary>
     /// 画像を512×512の正方形に変換します。
     /// </summary>
-    /// <param name="request">リクエスト.</param>
-    /// <returns>変換結果.</returns>
+    /// <param name="request">リクエスト。</param>
+    /// <param name="cancellationToken">キャンセルトークン。</param>
+    /// <returns>変換結果。</returns>
     [HttpPost("resize")]
     public async Task<ActionResult<ResizeImageResponse>> ResizeImage(
-        [FromBody] ResizeImageRequest request)
+        [FromBody] ResizeImageRequest request,
+        CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "画像変換リクエスト受信: FilePath={FilePath}, ResizeMode={ResizeMode}",
             request.FilePath,
             request.ResizeMode ?? "fit");
 
-        var result = await _resizeImageUseCase.ExecuteAsync(request);
+        var command = new ResizeImageCommand(request.FilePath, request.ResizeMode);
+        var result = await _mediator.Send(command, cancellationToken);
 
         if (result.IsSuccess)
         {

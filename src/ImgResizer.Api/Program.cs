@@ -1,11 +1,13 @@
 using FluentValidation;
 using ImgResizer.Api.Middleware;
-using ImgResizer.Application.UseCases;
+using ImgResizer.Application.Behaviors;
+using ImgResizer.Application.Commands;
 using ImgResizer.Application.Validators;
 using ImgResizer.Domain.Interfaces;
 using ImgResizer.Infrastructure.Configuration;
 using ImgResizer.Infrastructure.Repositories;
 using ImgResizer.Infrastructure.Services;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +18,16 @@ builder.Services.Configure<ImageResizeSettings>(
 // サービスの登録
 builder.Services.AddScoped<IImageRepository, FileSystemImageRepository>();
 builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
-builder.Services.AddScoped<ResizeImageUseCase>();
+
+// MediatRの登録
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(ResizeImageCommand).Assembly);
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+});
 
 // FluentValidationの登録
-builder.Services.AddValidatorsFromAssemblyContaining<ResizeImageRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ResizeImageCommandValidator>();
 
 // コントローラー
 builder.Services.AddControllers();

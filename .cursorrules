@@ -7,20 +7,20 @@
 ## 技術スタック
 - **言語**: C# (.NET 8.0)
 - **フレームワーク**: ASP.NET Core WebAPI
-- **アーキテクチャ**: クリーンアーキテクチャ + CQRS（段階的に導入中）
+- **アーキテクチャ**: クリーンアーキテクチャ + CQRS
 - **画像処理**: System.Drawing.Common（SixLabors.ImageSharpへ移行予定）
 - **エラーハンドリング**: ✅ Resultパターン + グローバル例外ハンドラー（実装完了: 2025-12-01）
 - **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
 - **バリデーション**: ✅ FluentValidation（実装完了: 2025-12-01）
-- **メディエーター**: 未導入（MediatR導入予定）
+- **メディエーター**: ✅ MediatR（実装完了: 2025-12-02）
 - **静的解析**: ✅ Roslyn Analyzers、StyleCop、SonarAnalyzer、Roslynator（実装完了: 2025-12-01）
 
 ## 開発方針
 
 ### アーキテクチャ原則
 - クリーンアーキテクチャの原則に厳密に従う
-- CQRS（Command Query Responsibility Segregation）パターンを採用（導入予定）
-- MediatRを使用したCommand/Queryの実装（導入予定）
+- ✅ CQRS（Command Query Responsibility Segregation）パターンを採用 **実装完了: 2025-12-02**
+- ✅ MediatRを使用したCommand/Queryの実装 **実装完了: 2025-12-02**
 - レイヤー間の依存関係を明確に保つ
   - Domain層: 他のレイヤーに依存しない
   - Application層: Domain層のみに依存
@@ -100,7 +100,7 @@ img-resizer/
 4. ✅ **Resultパターンを使用する**（例外を安易に使わない）**実装済み**
 5. ✅ **FluentValidationでバリデーションを実装する** **実装済み**
 6. ✅ **XMLドキュメントコメントを記述する**（すべてのpublicメンバー）**実装済み**
-7. MediatRを使用してCommand/Queryを実装する（導入予定）
+7. ✅ **MediatRを使用してCommand/Queryを実装する** **実装済み**
 8. 構造化ログを実装する（Serilog導入予定）
 9. ✅ **静的解析ツールの警告に対応する**（警告0個を維持）**実装済み**
 
@@ -119,7 +119,7 @@ img-resizer/
 - 高品質なリサンプリングアルゴリズムを使用
 - メモリリークを防ぐため、`using` ステートメントでリソースを適切に解放
 - 非同期I/O操作を使用
-- CancellationTokenを適切に使用（今後追加予定）
+- ✅ CancellationTokenを適切に使用（MediatRで対応済み）
 
 ### セキュリティ
 - パストラバーサル攻撃を防止
@@ -211,10 +211,10 @@ img-resizer/
 - ✅ **XMLドキュメントコメント** (2025-12-01): コードドキュメントの充実
   - すべてのpublicクラス、メソッド、プロパティにコメント追加
   - IntelliSenseでコメント表示に対応
-
-### 導入予定（優先度: 高）
-- **MediatR + CQRS**: Command/Queryの明確な分離
-- **静的解析ツール**: .editorconfig、StyleCop、SonarAnalyzer
+- ✅ **MediatR + CQRS** (2025-12-02): Command/Queryの明確な分離
+  - `ResizeImageCommand`と`ResizeImageCommandHandler`を実装
+  - `ValidationBehavior`によるパイプラインバリデーション
+  - CancellationTokenの一貫した使用
 
 ### 導入予定（優先度: 中）
 - **ImageSharp**: System.Drawing.Commonからの移行
@@ -243,8 +243,20 @@ img-resizer/
   
 **フェーズ1完全完了！🎉**
 
-### 次のステップ（フェーズ2）
-- MediatR + CQRS実装
+### フェーズ2: 実施済み
+- ✅ **フェーズ2: MediatR + CQRS実装** (2025-12-02)
+  - `ResizeImageCommand`と`ResizeImageCommandHandler`を実装
+  - `ResizeImageCommandValidator`を実装
+  - `ValidationBehavior`によるパイプラインバリデーション
+  - `ImageController`をMediatR対応に更新
+  - ビルド成功、警告0個達成
+
+**フェーズ2完全完了！🎉**
+
+### 次のステップ（フェーズ3）
+- ImageSharp導入
+- Serilog導入
+- 設定クラスの強化
 
 ### リファクタリング方針
 - モダンな設計への移行は段階的に実施
