@@ -14,7 +14,7 @@
 - **API**: ASP.NET Core WebAPI
 - **画像処理**: SixLabors.ImageSharp ✅（実装完了: 2025-12-02）
 - **エラーハンドリング**: Resultパターン + グローバル例外ハンドラー ✅（実装完了: 2025-12-01）
-- **ロギング**: Microsoft.Extensions.Logging（Serilogへ移行予定）
+- **ロギング**: ✅ Serilog（実装完了: 2025-12-02）
 - **バリデーション**: FluentValidation ✅（実装完了: 2025-12-01）
 - **メディエーター**: MediatR ✅（実装完了: 2025-12-02）
 - **静的解析**: ✅ Roslyn Analyzers、StyleCop、SonarAnalyzer、Roslynator（実装完了: 2025-12-01、警告0個）
@@ -30,9 +30,10 @@
 - 設定ファイル（`appsettings.json`）からファイルパスを取得
 - RESTful APIエンドポイント
 - Swagger/OpenAPIドキュメント
-- 構造化ログ（Serilog）によるトラブルシューティング
+- ✅ 構造化ログ（Serilog）によるトラブルシューティング（実装完了: 2025-12-02）
 - FluentValidationによる堅牢なバリデーション
 - Resultパターンによる明示的なエラーハンドリング
+- ✅ 設定値の起動時検証（実装完了: 2025-12-02）
 
 ## プロジェクト構造
 
@@ -130,8 +131,48 @@ img-resizer/
   "Logging": {
     "LogLevel": {
       "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Microsoft.AspNetCore": "Warning",
+      "ImgResizer": "Debug"
     }
+  },
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.AspNetCore": "Warning",
+        "ImgResizer": "Debug"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/img-resizer-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30,
+          "fileSizeLimitBytes": 104857600,
+          "rollOnFileSizeLimit": true
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/img-resizer-errors-.log",
+          "rollingInterval": "Day",
+          "restrictedToMinimumLevel": "Error",
+          "retainedFileCountLimit": 90
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId", "WithProcessId" ]
   },
   "ImageResize": {
     "InputDirectory": "C:\\images\\input",
@@ -140,10 +181,23 @@ img-resizer/
       "Width": 512,
       "Height": 512
     },
-    "AllowedExtensions": [".jpg", ".jpeg", ".png", ".gif", ".bmp"]
+    "AllowedExtensions": [".jpg", ".jpeg", ".png", ".gif", ".bmp"],
+    "MaxFileSize": 52428800,
+    "PaddingColor": {
+      "R": 0,
+      "G": 0,
+      "B": 0,
+      "A": 255
+    },
+    "ImageQuality": {
+      "JpegQuality": 90,
+      "PngCompressionLevel": 6
+    }
   }
 }
 ```
+
+**注意**: 設定値は起動時に検証されます。無効な設定がある場合、アプリケーションは起動を停止します。
 
 ## 必要な環境
 
@@ -201,7 +255,8 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 - **Infrastructure層**: 外部ライブラリの使用と実装（Domain層に依存）
   - ImageSharpによる画像処理
   - ファイルシステムアクセス
-  - Serilogによるロギング
+  - ✅ Serilogによる構造化ログ（実装完了: 2025-12-02）
+  - ✅ 設定値の検証（ImageResizeSettingsValidator、実装完了: 2025-12-02）
 - **Presentation層**: WebAPIコントローラー（Application層とInfrastructure層に依存）
   - RESTful API
   - グローバル例外ハンドラー（実装済み）
@@ -263,15 +318,25 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 
 ### ロギング
 
-- **Serilog**: 構造化ログによる高度なログ分析
+- ✅ **Serilog**: 構造化ログによる高度なログ分析（実装完了: 2025-12-02）
   - コンソール出力（開発環境）
-  - ファイル出力（本番環境、ローテーション付き）
+  - ファイル出力（本番環境、ローテーション付き、30日保持）
+  - エラーログ専用ファイル（90日保持）
   - Seq統合（開発環境でのログ可視化）
+  - リクエストログの自動記録
+  - ログエンリッチャー（MachineName、ThreadId、ProcessId）
 
 ### バリデーション
 
 - **FluentValidation**: 宣言的で読みやすいバリデーションルール
 - **MediatRパイプライン**: 自動バリデーション実行
+
+### 設定管理
+
+- ✅ **設定値の起動時検証**（実装完了: 2025-12-02）
+  - `ImageResizeSettingsValidator`による設定値検証
+  - 無効な設定がある場合、アプリケーション起動を停止
+  - 設定検証の単体テストを実装
 
 ## 今後の改善計画
 
@@ -290,8 +355,10 @@ Invoke-RestMethod -Uri "https://localhost:5001/api/image/resize" `
 
 ### フェーズ3: ライブラリ移行（✅ 完全完了: 2025-12-02）
 - ✅ **ImageSharp導入**（**完了: 2025-12-02**）- System.Drawing.Commonから移行完了
-- 🔄 Serilog導入（構造化ログ）
-- 🔄 静的解析ツール強化
+
+### フェーズ5: 設定・ロギング強化（✅ 完全完了: 2025-12-02）
+- ✅ **設定クラスの強化**（**完了: 2025-12-02**）- IValidateOptionsによる起動時検証
+- ✅ **Serilog導入**（**完了: 2025-12-02**）- 構造化ログ、リクエストログ、複数出力先対応
 
 ### 優先度: 低
 - 📋 ドメインイベントの導入
