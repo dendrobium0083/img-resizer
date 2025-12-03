@@ -8,12 +8,17 @@ using ImgResizer.Infrastructure.Configuration;
 using ImgResizer.Infrastructure.Repositories;
 using ImgResizer.Infrastructure.Services;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 設定の読み込み
-builder.Services.Configure<ImageResizeSettings>(
-    builder.Configuration.GetSection("ImageResize"));
+// 設定の読み込みと検証
+builder.Services.AddOptions<ImageResizeSettings>()
+    .Bind(builder.Configuration.GetSection("ImageResize"))
+    .ValidateOnStart();
+
+// 設定検証クラスの登録
+builder.Services.AddSingleton<IValidateOptions<ImageResizeSettings>, ImageResizeSettingsValidator>();
 
 // サービスの登録
 builder.Services.AddScoped<IImageRepository, FileSystemImageRepository>();
